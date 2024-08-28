@@ -45,55 +45,55 @@ variable "secret_cert_days_to_expire" {
 variable "email_Contact_email_for_notification_emails" {
   description = "This is the e-mail address that should be used to send a message about all the expiring secrets/certs where an owner could not be found: Note: they will be send as an attachement in CSV format"
   type        = string
-  default     = "martin@tastensen.dk"
+  default     = "<e-mail address>"
 }
 
 variable "subscription_id" {
   description = "Provide subscription id for deployment"
   type        = string
-  default     = "cb83e8c8-dcdd-4d25-8449-e727bd23b0f3"
+  default     = "<subscription id>"
 }
 
 variable "tenant_id" {
   description = "Provide tenantid for the specific tenant. This is used during signin"
   type        = string
-  default     = "105f1023-7c86-4358-935f-b167313506fb"
+  default     = "<tenant id>"
 }
 
 variable "baseline_resource_group_name" {
   description = "Resource group where all resources are deployed"
   type        = string
-  default     = "mts-secret-test-rg-p"
+  default     = "<resource-group-name>"
 }
 
 variable "key_vault_resource_name" {
   description = "Provide name for key-vault, The key vault will be used to store secrets that we don't wish to store in clear text"
   type        = string
-  default     = "mts-keyvault-test-p"
+  default     = "<key vault name>"
 }
 
 variable "automation_account_solution_name" {
   description = "This is the name of the automation account. NOTE: This name has to be unique"
   type        = string
-  default     = "mts-secret-verification-rb-p"
+  default     = "<automation account name>"
 }
 
 variable "Communication_service_naming_convention" {
   description = "This is a short name, that will be used in front of each of the communication services ressources. Name is used for ressources, so you can use it if you have a naming convetion etc."
   type        = string
-  default     = "mmt-consult-p"
+  default     = "<short name for communication service ressources>"
 }
 
 variable "Service_Principal_name" {
   description = "Service Principal name the application_id value. Used for connecting to Entra ID and collecting secrets and certificates"
   type        = string
-  default     = "entra_id_secret_and_cert_audit_p"
+  default     = "<service principal name>"
 }
 
 variable "key_vault_secret_key_name" {
   description = "Identity of the secret used for the service principal that have access to see values in entra ID. This name is also used on the SP to identify the key"
   type        = string
-  default     = "key-vault-expiry-p"
+  default     = "<key-vault-secret-name>"
 }
 
 variable "logic_app_communication_service_primary_connection_string" {
