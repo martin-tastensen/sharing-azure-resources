@@ -1,5 +1,7 @@
 # Local .terraform directories
 **/.terraform/*
+**\.terraform\*
+.terraform.lock.hcl
 
 # .tfstate files
 *.tfstate
@@ -35,3 +37,4 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+Solutions/App Registration - expiration overview/terraform/.terraform.lock.hcl

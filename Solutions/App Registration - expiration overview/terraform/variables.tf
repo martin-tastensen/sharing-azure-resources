@@ -45,7 +45,7 @@ variable "secret_cert_days_to_expire" {
 variable "email_Contact_email_for_notification_emails" {
   description = "This is the e-mail address that should be used to send a message about all the expiring secrets/certs where an owner could not be found: Note: they will be send as an attachement in CSV format"
   type        = string
-  default     = "<e-mail address>"
+  default     = "e-mail"
 }
 
 variable "subscription_id" {
@@ -63,13 +63,13 @@ variable "tenant_id" {
 variable "baseline_resource_group_name" {
   description = "Resource group where all resources are deployed"
   type        = string
-  default     = "<resource-group-name>"
+  default     = "<resource group name>"
 }
 
 variable "key_vault_resource_name" {
   description = "Provide name for key-vault, The key vault will be used to store secrets that we don't wish to store in clear text"
   type        = string
-  default     = "<key vault name>"
+  default     = "<key vault ressource name>"
 }
 
 variable "automation_account_solution_name" {
@@ -81,7 +81,7 @@ variable "automation_account_solution_name" {
 variable "Communication_service_naming_convention" {
   description = "This is a short name, that will be used in front of each of the communication services ressources. Name is used for ressources, so you can use it if you have a naming convetion etc."
   type        = string
-  default     = "<short name for communication service ressources>"
+  default     = "<shortname for cummincation service items>"
 }
 
 variable "Service_Principal_name" {
@@ -93,7 +93,7 @@ variable "Service_Principal_name" {
 variable "key_vault_secret_key_name" {
   description = "Identity of the secret used for the service principal that have access to see values in entra ID. This name is also used on the SP to identify the key"
   type        = string
-  default     = "<key-vault-secret-name>"
+  default     = "automation-audit-user-secret"
 }
 
 variable "logic_app_communication_service_primary_connection_string" {
@@ -101,3 +101,10 @@ variable "logic_app_communication_service_primary_connection_string" {
   type        = string
   default     = "communication-service-primary-connection-string"
 }
+
+variable "location" {
+  description = "Define the datacenter where the solution should be deployed"
+  type        = string
+  default     = "sweden central"
+}
+

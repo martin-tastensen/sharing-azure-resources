@@ -1,7 +1,7 @@
 ## Create Keyvault for secret SP secret storage
 resource "azurerm_key_vault" "key_vault_resource_name" {
   name                        = var.key_vault_resource_name
-  location                    = local.Primary_location
+  location                    = var.location
   resource_group_name         = azurerm_resource_group.baseline_resource_group.name
   enabled_for_disk_encryption = true
   tenant_id                   = data.azurerm_client_config.current.tenant_id
@@ -20,6 +20,7 @@ resource "azurerm_key_vault" "key_vault_resource_name" {
 resource "azuread_application" "service_principal_name_entra_id" {
   display_name = var.Service_Principal_name
   notes        = "Used in relation to audit mail, being send out to owners of SP where the secret/cert is about to expire ot expired"
+  owners = [data.azurerm_client_config.current.object_id]
 
   required_resource_access {
     resource_app_id = "00000003-0000-0000-c000-000000000000" # Microsoft Graph

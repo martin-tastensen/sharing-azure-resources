@@ -1,6 +1,6 @@
 resource "azurerm_logic_app_workflow" "la_expiration_notification" {
   name                = "la_expiration-notification"
-  location            = local.Primary_location
+  location            = var.location
   resource_group_name = azurerm_resource_group.baseline_resource_group.name
 
   identity {

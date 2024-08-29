@@ -1,6 +1,6 @@
 resource "azurerm_automation_account" "expiration-automation" {
   name                = var.automation_account_solution_name
-  location            = local.Primary_location
+  location            = var.location
   resource_group_name = azurerm_resource_group.baseline_resource_group.name
   sku_name            = "Basic"
 
@@ -71,7 +71,7 @@ data "local_file" "runbook-script" {
 
 resource "azurerm_automation_runbook" "verify-secret-expiration" {
   name                    = "verify-secret-expiration"
-  location                = local.Primary_location
+  location                = var.location
   resource_group_name     = azurerm_resource_group.baseline_resource_group.name
   automation_account_name = azurerm_automation_account.expiration-automation.name
   log_verbose             = "false"
