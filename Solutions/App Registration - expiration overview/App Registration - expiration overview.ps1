@@ -69,8 +69,6 @@ $AzureContext = (Connect-AzAccount -Subscription $subscription_id -Tenant $tenan
 # Set and store context
 $AzureContext = Set-AzContext -SubscriptionName $AzureContext.Subscription
 
-
-
 ##################################
 # Sign-in with Service Principal # 
 ##################################
@@ -107,7 +105,6 @@ $Token = $Connection.access_token
 #Connect-MgGraph -AccessToken $token -NoWelcome
 Connect-MgGraph -AccessToken ($token |ConvertTo-SecureString -AsPlainText -Force)
 
-
 #############################################################################################################################
 
 # Calculate when the date for when to send a warning
@@ -121,7 +118,7 @@ $tenant_name = (Get-AzTenant | where-object Id -eq $tenant_details).Name
 Write-Output $tenant_name
 
 # Get list of all Service Principals in the tenant
-$App_registrations = Get-MgApplication -All -Property Id,DisplayName,AppId,AdditionalProperties,PasswordCredentials,keyCredentials
+$App_registrations = Get-MgApplication -All -Property Id,DisplayName,AppId,AdditionalProperties,PasswordCredentials,keyCredentials,CreatedDateTime
 
 <#
 Used to notify the tenant admins by running the workflow that notifices about the generel state of expiring secrets and certiticates.
@@ -133,11 +130,8 @@ function send_reports_to_governance_team {
     $storage_account_info_context = $storage_account_info.Context
 
     # Define The naming the files and operations for each export type
-
     
     $final_local_export_path = ".\" + $export_request_type + ".csv"
-
-
 
     $returndata | Export-Csv -path $final_local_export_path -Delimiter ';' -Encoding unicode
 
@@ -167,7 +161,7 @@ function send_reports_to_governance_team {
         owner_userprincipalname         = ""
         owner_id                        = ""
         tenant_name                     = ""
-        tenant_id                       = ""
+        tenant_id                       = $tenant_id
         request_type                    = $export_request_type
         blob_file_name                  = $export_request_type + ".csv"
         mail_subject                    = $export_file_name
@@ -275,11 +269,17 @@ For all Service Principals, where the owner is not registered, we will note "no_
 We will use this later to report these accounts to the governance team.
 #>
 function get_list_of_owners_for_expired_keys{
-    
-    $serviceprincipal_no_owner_expanded = @()
-    $serviceprincipal_owner_expanded = @()
+    $service_principal_list_of_owners = @()
+    $trigger = 0 
+    $total_number_off_Service_principals = $export_SP_data.count 
+    Write-Output "Generating list of owners for all Service Principals in Entra ID"
     foreach($keys in $export_SP_data)
     {
+        $trigger++
+        $application_name = $keys.sp_displayname
+    
+        Write-Output "Now working on $application_name - working on $trigger/$total_number_off_Service_principals"
+        
         $serviceprincipal_owners = Get-MgApplicationOwner -ApplicationId $keys.sp_object_id
 
         <#
@@ -299,7 +299,7 @@ function get_list_of_owners_for_expired_keys{
             $temp_owner | Add-Member -NotePropertyName blob_file_name -NotePropertyValue "NA"
             $temp_owner | Add-Member -NotePropertyName mail_subject -NotePropertyValue "NA"
 
-            $serviceprincipal_no_owner_expanded += $temp_owner
+            $service_principal_list_of_owners += $temp_owner
         }
         else {
             foreach($owner in $serviceprincipal_owners){
@@ -314,78 +314,87 @@ function get_list_of_owners_for_expired_keys{
                 $temp_owner | Add-Member -NotePropertyName blob_file_name -NotePropertyValue "NA"
                 $temp_owner | Add-Member -NotePropertyName mail_subject -NotePropertyValue "NA"
 
-                $serviceprincipal_owner_expanded += $temp_owner
+                $service_principal_list_of_owners += $temp_owner
             }
         }
     }
-    return $serviceprincipal_owner_expanded, $serviceprincipal_no_owner_expanded
+    return $service_principal_list_of_owners
 }
 
 $get_list_of_owners_for_expired_keys = get_list_of_owners_for_expired_keys
-$serviceprincipal_owner_expanded = $get_list_of_owners_for_expired_keys[0].PSObject.Copy()
-$serviceprincipal_no_owner_expanded = $get_list_of_owners_for_expired_keys[1].PSObject.Copy()
-
 
 <# 
 Take the result of the expired keys, and inform the registered owners, if such owners exists and if the feature is enabled
 #>
 function Send-email-to-users {  
-    foreach($user in $serviceprincipal_owner_expanded)
+    $trigger = 0 
+    $total_number_of_get_list_of_owners_for_expired_keys_ = $get_list_of_owners_for_expired_keys.count 
+    Write-Output "Informing owners of expiring secrets"
+
+    foreach($user in $get_list_of_owners_for_expired_keys)
     {
-        if($user.secret_status -eq "expired")
+        $owner_name = $user.owner_displayname
+        $secret_displayname = $user.sp_displayname
+        $list_of_expired_secrets = $get_list_of_owners_for_expired_keys.count
+        $secret_expires_eta = $user.secret_days_until_secret_expires
+        $trigger++
+
+        
+        if($user.secret_status -eq "expired" -and $user.owner_mail -ne "No_owner") # If the secret is expired, we will send a notification on each run
         {
-            Write-Output $user | ConvertTo-Json
+            Write-Output "Notify $owner_name about expired secret on $secret_displayname ($trigger/$list_of_expired_secrets)"
+            $body = $user | ConvertTo-Json
+            Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
+        }
+        elseif ($user.owner_mail -eq "No_owner") {
+            Write-Output "No owner found for secret  ($trigger/$list_of_expired_secrets)"
+        }
+        elseif ($email_inform_owners_days_with_warnings -notcontains $user.secret_days_until_secret_expires) 
+        {
+            Write-Output "ETA for expiration not within notification values. $owner_name have not been warned today about $secret_displayname in expiring in $secret_expires_eta days ($trigger/$list_of_expired_secrets)"
+        }
+        elseif($email_inform_owners_days_with_warnings -contains $user.secret_days_until_secret_expires -and $user.owner_mail -ne "No_owner") 
+        {
+            Write-Output "Notify $owner_name about secret on $secret_displayname in $secret_expires_eta days ($trigger/$list_of_expired_secrets)"
             $body = $user | ConvertTo-Json
             Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
         }
         else {
-            foreach($day in $email_inform_owners_days_with_warnings.split(','))
-            { 
-                if($day -like $user.secret_days_until_secret_expires)
-                {
-                    Write-Output $user | ConvertTo-Json
-                    $body = $user | ConvertTo-Json
-                    Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
-                }
-            }
+            write-error "Did not match any fulters!: $secret_displayname ($trigger/$list_of_expired_secrets)"
         }        
     }
 }
 
 if ($email_inform_owners_directly -eq $true) { $serviceprincipal_owner_expanded = Send-email-to-users } # Email users if enabled
-
-
 <# 
 Search all Service principals for expired keys and secrets, and collect all of them in an array.
 This data will be send to the governance team if enabled.
 #>
+
 function find_all_SP_with_expired_keys_and_secrets {
     $returndata = @()
 
-    foreach($secret in $serviceprincipal_owner_expanded)
+    foreach($secret in $get_list_of_owners_for_expired_keys)
     {  
         if ($secret.secret_status -eq "expired") 
         {
             $returndata += $secret
         }
-
     }
-    foreach($secret in $serviceprincipal_no_owner_expanded)
-    {        
-        if ($secret.secret_status -eq "expired") 
-        {
-        $returndata += $secret
-        }
-    }
-
 
     $returndata = $returndata | Select-Object sp_displayname,sp_object_id,owner_userprincipalname,sp_application_id,secret_type,secret_status,secret_DisplayName,secret_StartDateTime,secret_EndDateTime,secret_days_until_secret_expires
     $export_request_type = "find_all_SP_with_expired_keys_and_secrets"
     $export_file_name = "Overview - all expired secrets and keys"
-    send_reports_to_governance_team = $returndata, $export_file_name, $export_request_type
+    send_reports_to_governance_team = $returndata, $export_file_name, $export_request_type | Out-Null
+    return $returndata
 }
 
-if ($email_Contact_email_for_all_SPs_with_expired_secrets_status -eq $true) { $export_all_SP_with_expired_keys_and_secrets = find_all_SP_with_expired_keys_and_secrets }
+if ($email_Contact_email_for_all_SPs_with_expired_secrets_status -eq $true) 
+{ 
+    $export_all_SP_with_expired_keys_and_secrets = find_all_SP_with_expired_keys_and_secrets 
+}
+Write-Output $export_all_SP_with_expired_keys_and_secrets
+
 
 <# 
 Search all Service principals where the secrets and certs are about to expire and collect all of them in an array.
@@ -394,28 +403,26 @@ This data will be send to the governance team if enabled.
 function all_SPs_where_secret_is_about_to_expire {
     $returndata = @()
 
-    foreach($secret in $serviceprincipal_owner_expanded)
+    foreach($secret in $get_list_of_owners_for_expired_keys)
     {  
+        $secret | Select-Object DisplayName,secret_status
         if ($secret.secret_status -eq "Active - about to expire") 
         {
             $returndata += $secret
+            $secret
         }
+    }
 
-    }
-    foreach($secret in $serviceprincipal_no_owner_expanded)
-    {        
-        if ($secret.secret_status -eq "Active - about to expire") 
-        {
-        $returndata += $secret
-        }
-    }
-    $returndata = $returndata | Select-Object sp_displayname,sp_object_id,owner_userprincipalname,sp_application_id,secret_type,secret_status,secret_DisplayName,secret_StartDateTime,secret_EndDateTime,secret_days_until_secret_expires
+    #$returndata = $returndata | Select-Object sp_displayname,sp_object_id,owner_userprincipalname,sp_application_id,secret_type,secret_status,secret_DisplayName,secret_StartDateTime,secret_EndDateTime,secret_days_until_secret_expires
     $export_request_type = "find_all_SPs_where_secret_is_about_to_expire"
     $export_file_name = "Overview - soon to expire secrets and certificates"
     send_reports_to_governance_team = $returndata, $export_file_name, $export_request_type
 }
 
-if ($email_Contact_email_for_all_SPs_where_secret_is_about_to_expire -eq $true) { $export_all_SPs_where_secret_is_about_to_expire  = all_SPs_where_secret_is_about_to_expire }
+if ($email_Contact_email_for_all_SPs_where_secret_is_about_to_expire -eq $true) 
+{ 
+    $export_all_SPs_where_secret_is_about_to_expire  = all_SPs_where_secret_is_about_to_expire 
+}
 
 <#
 Create an array containing all the Service principals that do NOT have an owner. It does not matter wether it uses a
@@ -423,7 +430,6 @@ secret, certificate or federated authentication
 #>
 function get_list_of_orphaned_Service_Principals{
     $returndata = @()
-    $test
     foreach($key in $App_registrations)
     {
         $serviceprincipal_owners = Get-MgApplicationOwner -ApplicationId $key.id
@@ -446,4 +452,7 @@ function get_list_of_orphaned_Service_Principals{
     send_reports_to_governance_team = $returndata, $export_file_name, $export_request_type
 }
 
-if ($email_Contact_email_get_list_of_orphaned_Service_Principals -eq $true) { $export_get_list_of_orphaned_Service_Principals  = get_list_of_orphaned_Service_Principals }
+if ($email_Contact_email_get_list_of_orphaned_Service_Principals -eq $true) 
+{ 
+    $export_get_list_of_orphaned_Service_Principals  = get_list_of_orphaned_Service_Principals 
+}
