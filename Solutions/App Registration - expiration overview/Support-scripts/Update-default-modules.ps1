@@ -143,23 +143,22 @@ foreach($i in $allmodules)
 {
     $trigger++
     $module = Get-AzAutomationModule -AutomationAccountName $automationaccountname -ResourceGroupName $resourcegroup -RuntimeVersion "7.2" -name $i.module 
-    $output = "Name: " + $i.module + " - current version: " + $i.version + " - expected version: " + $module.Version + " - " + $trigger + "/" + $allmodules.count
-    Write-Output $output 
 
     if($module.Version -ne $i.version -or $module.ProvisioningState -eq "Failed")
     {
         if($module.Version -ne $i.version)
         {
-            $output = $i.module + " - wrong version, expected " + $i.version + ", but " + $module.Version + " was discovered. Upgrading"
-            Write-Output $output
+            $output = $i.module + " - wrong version, expected " + $i.version + ", but " + $module.Version + " was discovered. Upgrading - " + $trigger + "/" + $allmodules.count
             $silent = New-AzAutomationModule -AutomationAccountName $automationaccountname -ResourceGroupName $resourcegroup -name $i.module -ContentLinkUri $i.url -RuntimeVersion "7.2"
         }
         elseif($module.ProvisioningState -eq "Failed")
         {
-            $output = $i.module + " module is in " + $module.ProvisioningState + " trying to reinstall."
-            Write-Output $output
+            $output = $i.module + " module is in " + $module.ProvisioningState + " trying to reinstall - " + $trigger + "/" + $allmodules.count
             $silent = New-AzAutomationModule -AutomationAccountName $automationaccountname -ResourceGroupName $resourcegroup -name $i.module -ContentLinkUri $i.url -RuntimeVersion "7.2"
         }
-            
     }
+    else {
+        $output = "Name: " + $i.module + " - current version: " + $i.version + " - expected version: " + $module.Version + " - " + $trigger + "/" + $allmodules.count
+    }
+    Write-Output $output           
 }
