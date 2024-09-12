@@ -40,3 +40,6 @@ terraform.rc
 Solutions/App Registration - expiration overview/terraform/.terraform.lock.hcl
 Solutions/.DS_Store
 .DS_Store
+.vscode/settings.json
+.vscode/settings.json
+.vscode*
