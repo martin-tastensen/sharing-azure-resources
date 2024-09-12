@@ -18,6 +18,9 @@ You don't need to make any changes in the terraform files or the script for the 
 
 You have to configure the variables.tf file with the variables for your environment
 
+### Update AZ modules
+To ensure that the az modules in the automation account is up to date, please update them using the script in the support-scripts folder 
+
 ### Requires customisation
 #### email_Contact_email_for_notification_emails
 *This is the e-mail address that should be used to send a message about all the expiring secrets/certs where an owner could not be found: Note: they will be send as an attachement in CSV format*

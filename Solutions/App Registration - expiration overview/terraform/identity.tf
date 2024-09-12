@@ -20,7 +20,7 @@ resource "azurerm_key_vault" "key_vault_resource_name" {
 resource "azuread_application" "service_principal_name_entra_id" {
   display_name = var.Service_Principal_name
   notes        = "Used in relation to audit mail, being send out to owners of SP where the secret/cert is about to expire ot expired"
-  owners = [data.azurerm_client_config.current.object_id]
+  owners       = [data.azurerm_client_config.current.object_id]
 
   required_resource_access {
     resource_app_id = "00000003-0000-0000-c000-000000000000" # Microsoft Graph
@@ -121,5 +121,18 @@ resource "azurerm_role_assignment" "assign_storage_account_Storage_Blobl_data_Co
     azurerm_resource_group.baseline_resource_group,
     azurerm_storage_account.storage_account_temp_storage,
     azurerm_logic_app_workflow.la_expiration_notification,
+  ]
+}
+
+resource "azurerm_role_assignment" "assign_storage_contributor_to_automation_account" {
+  scope                = azurerm_automation_account.expiration-automation.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_automation_account.expiration-automation.identity[0].principal_id
+
+  depends_on = [
+    azurerm_resource_group.baseline_resource_group,
+    azurerm_storage_account.storage_account_temp_storage,
+    azurerm_logic_app_workflow.la_expiration_notification,
+    azurerm_automation_account.expiration-automation,
   ]
 }

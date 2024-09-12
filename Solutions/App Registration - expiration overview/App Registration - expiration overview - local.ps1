@@ -3,7 +3,7 @@
 Copyright (c) MMT Consult. All rights reserved. Licensed under the MIT license.
 See LICENSE in the project root for license information.
 
-Version 1.0.0
+Version 1.1.0
 Author: Martin Meiner Tästensen
 contact: support@mmt-consult.dk
 #>
@@ -12,6 +12,7 @@ contact: support@mmt-consult.dk
 ######################################################################
 # Insert the data from the variables on the automation account below # 
 ######################################################################
+
 $tenant_id = ""
 $subscription_id = ""
 $application_id = ""
@@ -33,14 +34,14 @@ $email_Contact_email_get_list_of_orphaned_Service_Principals = $true
 #########################################
 # Sign-in with system assigned identity # 
 #########################################
-
+$stopwatch = [system.diagnostics.stopwatch]::StartNew()
 # process borrowed from MS learn:
 # https://learn.microsoft.com/en-us/azure/automation/enable-managed-identity-for-automation#authenticate-access-with-system-assigned-managed-identity
 
 # Connect to Azure with system-assigned managed identity
 #$AzureContext = (Connect-AzAccount -Subscription $subscription_id -Tenant $tenant_id -Identity).context
 
-Connect-AzAccount -Subscription $subscription_id -Tenant $tenant_id
+Connect-AzAccount -Subscription $subscription_id -Tenant $tenant_id 
 
 ##################################
 # Sign-in with Service Principal # 
@@ -134,7 +135,7 @@ function send_reports_to_governance_team {
         owner_userprincipalname         = ""
         owner_id                        = ""
         tenant_name                     = ""
-        tenant_id                       = ""
+        tenant_id                       = $tenant_id
         request_type                    = $export_request_type
         blob_file_name                  = $export_request_type + ".csv"
         mail_subject                    = $export_file_name
@@ -234,14 +235,14 @@ function get-all-expired-keys {
     return $returndata
 }
 
-$export_SP_data = get-all-expired-keys
-
-<#
-Create an array containing all owners of the Service Principals with expired secrets and certificates
-For all Service Principals, where the owner is not registered, we will note "no_owner" in the value fields
-We will use this later to report these accounts to the governance team.
-#>
 function get_list_of_owners_for_expired_keys{
+
+    <#
+        Create an array containing all owners of the Service Principals with expired secrets and certificates
+        For all Service Principals, where the owner is not registered, we will note "no_owner" in the value fields
+        We will use this later to report these accounts to the governance team.
+    #>
+
     $service_principal_list_of_owners = @()
     $trigger = 0 
     $total_number_off_Service_principals = $export_SP_data.count 
@@ -256,9 +257,9 @@ function get_list_of_owners_for_expired_keys{
         $serviceprincipal_owners = Get-MgApplicationOwner -ApplicationId $keys.sp_object_id
 
         <#
-         To have the data in a nicer format, we find the owners of each SP and attach these values
-         to the object we crated earlier. 
-         Each owner will be added seperately to an array so we have the data combined.
+            To have the data in a nicer format, we find the owners of each SP and attach these values
+            to the object we crated earlier. 
+            Each owner will be added seperately to an array so we have the data combined.
         #>
         if($serviceprincipal_owners.count -lt 1){
             $temp_owner = $null
@@ -294,12 +295,12 @@ function get_list_of_owners_for_expired_keys{
     return $service_principal_list_of_owners
 }
 
-$get_list_of_owners_for_expired_keys = get_list_of_owners_for_expired_keys
-
-<# 
-Take the result of the expired keys, and inform the registered owners, if such owners exists and if the feature is enabled
-#>
 function Send-email-to-users {  
+
+    <# 
+        Take the result of the expired keys, and inform the registered owners, if such owners exists and if the feature is enabled
+    #>  
+
     $trigger = 0 
     $total_number_of_get_list_of_owners_for_expired_keys_ = $get_list_of_owners_for_expired_keys.count 
     Write-Output "Informing owners of expiring secrets"
@@ -338,13 +339,13 @@ function Send-email-to-users {
     }
 }
 
-if ($email_inform_owners_directly -eq $true) { $serviceprincipal_owner_expanded = Send-email-to-users } # Email users if enabled
-<# 
-Search all Service principals for expired keys and secrets, and collect all of them in an array.
-This data will be send to the governance team if enabled.
-#>
-
 function find_all_SP_with_expired_keys_and_secrets {
+
+    <# 
+        Search all Service principals for expired keys and secrets, and collect all of them in an array.
+        This data will be send to the governance team if enabled.
+    #>
+
     $returndata = @()
 
     foreach($secret in $get_list_of_owners_for_expired_keys)
@@ -362,18 +363,13 @@ function find_all_SP_with_expired_keys_and_secrets {
     return $returndata
 }
 
-if ($email_Contact_email_for_all_SPs_with_expired_secrets_status -eq $true) 
-{ 
-    $export_all_SP_with_expired_keys_and_secrets = find_all_SP_with_expired_keys_and_secrets 
-}
-Write-Output $export_all_SP_with_expired_keys_and_secrets
-
-
-<# 
-Search all Service principals where the secrets and certs are about to expire and collect all of them in an array.
-This data will be send to the governance team if enabled.
-#>
 function all_SPs_where_secret_is_about_to_expire {
+
+    <# 
+        Search all Service principals where the secrets and certs are about to expire and collect all of them in an array.
+        This data will be send to the governance team if enabled.
+    #>
+
     $returndata = @()
 
     foreach($secret in $get_list_of_owners_for_expired_keys)
@@ -392,16 +388,13 @@ function all_SPs_where_secret_is_about_to_expire {
     send_reports_to_governance_team = $returndata, $export_file_name, $export_request_type
 }
 
-if ($email_Contact_email_for_all_SPs_where_secret_is_about_to_expire -eq $true) 
-{ 
-    $export_all_SPs_where_secret_is_about_to_expire  = all_SPs_where_secret_is_about_to_expire 
-}
-
-<#
-Create an array containing all the Service principals that do NOT have an owner. It does not matter wether it uses a
-secret, certificate or federated authentication
-#>
 function get_list_of_orphaned_Service_Principals{
+
+    <#
+        Create an array containing all the Service principals that do NOT have an owner. It does not matter wether it uses a
+        secret, certificate or federated authentication
+    #>
+
     $returndata = @()
     foreach($key in $App_registrations)
     {
@@ -425,7 +418,56 @@ function get_list_of_orphaned_Service_Principals{
     send_reports_to_governance_team = $returndata, $export_file_name, $export_request_type
 }
 
+# Get a list of all expired keys
+$timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+Write-Output "Now getting all expired keys - time elapsed $timespend"
+$export_SP_data = get-all-expired-keys
+$found_SP_data_count = $export_SP_data.count
+$timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+Write-Output "Found $found_SP_data_count expired key - time elapsed $timespend"
+
+
+# Get a list of owners for all expired keys
+$timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+Write-Output "Now getting a list of all registered owners of service principals with expired secrets and certificates - time elapsed $timespend"
+$get_list_of_owners_for_expired_keys = get_list_of_owners_for_expired_keys
+$get_list_of_owners_for_expired_keys_count = $get_list_of_owners_for_expired_keys.count
+$timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+Write-Output "Found $get_list_of_owners_for_expired_keys_count of owners - time elapsed $timespend"
+
+
+# If enabled, it will send an e-mail to all registered owners of a Service Principal
+
+if ($email_inform_owners_directly -eq $true) 
+    { 
+    $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+    $get_list_of_owners_for_expired_keys_count = $get_list_of_owners_for_expired_keys.count
+    Write-Output "Informing owners about expiring secrets and certificates - List contains $get_list_of_owners_for_expired_keys_count - time elapsed $timespend"
+    $serviceprincipal_owner_expanded = Send-email-to-users # Email users if enabled
+    Write-Output "tried to inform all owners, please check Logic app for result - time elapsed $timespend"
+    } 
+
+# if enabled, it will send an overview to the registered notification e-mail about all service principals with expired secrets and certificated
+if ($email_Contact_email_for_all_SPs_with_expired_secrets_status -eq $true) 
+{   
+    $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+    Write-Output "Notifying notification address about all expired secrets and certificates  - time elapsed $timespend"
+    $export_all_SP_with_expired_keys_and_secrets = find_all_SP_with_expired_keys_and_secrets 
+}
+
+# If enabled, it will send an overview to the registered notification e-mail about all service principals that have secrets or certificates
+# that are about to expire
+if ($email_Contact_email_for_all_SPs_where_secret_is_about_to_expire -eq $true) 
+{ 
+    $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+    Write-Output "Notifying notification address about all secrets and certificates that are about to expire - time elapsed $timespend"
+    $export_all_SPs_where_secret_is_about_to_expire  = all_SPs_where_secret_is_about_to_expire 
+}
+
+# If enabled, it will send an overview to the registered notification e-mail about all service principals that doesen't contain an owner
 if ($email_Contact_email_get_list_of_orphaned_Service_Principals -eq $true) 
 { 
+    $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+    Write-Output "Notifying notification address about all orphaned service principals - time elapsed $timespend"
     $export_get_list_of_orphaned_Service_Principals  = get_list_of_orphaned_Service_Principals 
 }
