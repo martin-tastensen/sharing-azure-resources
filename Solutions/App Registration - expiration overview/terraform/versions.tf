@@ -37,8 +37,3 @@ data "azuread_application_published_app_ids" "well_known" {}
 
 ## User for Entra ID information - eg - tenant name
 data "azurerm_client_config" "current" {}
-
-
-
-# az login --tenant "105f1023-7c86-4358-935f-b167313506fb"
-# az account set --subscription "cb83e8c8-dcdd-4d25-8449-e727bd23b0f3"

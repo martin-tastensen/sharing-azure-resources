@@ -38,3 +38,5 @@ override.tf.json
 .terraformrc
 terraform.rc
 Solutions/App Registration - expiration overview/terraform/.terraform.lock.hcl
+Solutions/.DS_Store
+.DS_Store

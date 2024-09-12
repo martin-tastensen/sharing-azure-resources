@@ -51,3 +51,4 @@ resource "azurerm_key_vault_secret" "azurerm_communication_service_primary_conne
     azurerm_resource_group.baseline_resource_group
   ]
 }
+

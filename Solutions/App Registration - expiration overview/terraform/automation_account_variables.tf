@@ -3,42 +3,42 @@
 ########################################################
 
 resource "azurerm_automation_variable_bool" "email_Contact_email_get_list_of_orphaned_Service_Principals" {
-  name = "email_Contact_email_get_list_of_orphaned_Service_Principals"
-  resource_group_name = azurerm_resource_group.baseline_resource_group.name
+  name                    = "email_Contact_email_get_list_of_orphaned_Service_Principals"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
   automation_account_name = azurerm_automation_account.expiration-automation.name
-  value = var.email_Contact_email_get_list_of_orphaned_Service_Principals
-  description = "This will send an email to the governance team, with a list of all SP's that does not have an owner assigned"
-  
+  value                   = var.email_Contact_email_get_list_of_orphaned_Service_Principals
+  description             = "This will send an email to the governance team, with a list of all SP's that does not have an owner assigned"
+
   depends_on = [azurerm_automation_account.expiration-automation]
 }
 
 resource "azurerm_automation_variable_bool" "email_Contact_email_for_all_SPs_with_expired_secrets_status" {
-  name = "email_Contact_email_for_all_SPs_with_expired_secrets_status"
-  resource_group_name = azurerm_resource_group.baseline_resource_group.name
+  name                    = "email_Contact_email_for_all_SPs_with_expired_secrets_status"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
   automation_account_name = azurerm_automation_account.expiration-automation.name
-  value = var.email_Contact_email_for_all_SPs_with_expired_secrets_status
-  description = "Enable this value to notify the governance or IT team about the status of all SP's with expired secrets or certificates"
-  
+  value                   = var.email_Contact_email_for_all_SPs_with_expired_secrets_status
+  description             = "Enable this value to notify the governance or IT team about the status of all SP's with expired secrets or certificates"
+
   depends_on = [azurerm_automation_account.expiration-automation]
 }
 
 resource "azurerm_automation_variable_bool" "email_Contact_email_for_all_SPs_where_secret_is_about_to_expire" {
-  name = "email_Contact_email_for_all_SPs_where_secret_is_about_to_expire"
-  resource_group_name = azurerm_resource_group.baseline_resource_group.name
+  name                    = "email_Contact_email_for_all_SPs_where_secret_is_about_to_expire"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
   automation_account_name = azurerm_automation_account.expiration-automation.name
-  value = var.email_Contact_email_for_all_SPs_where_secret_is_about_to_expire
-  description = "This will send an email to the governance team, with a list of all SP's where the secret is about to expire"
-  
+  value                   = var.email_Contact_email_for_all_SPs_where_secret_is_about_to_expire
+  description             = "This will send an email to the governance team, with a list of all SP's where the secret is about to expire"
+
   depends_on = [azurerm_automation_account.expiration-automation]
 }
 
 resource "azurerm_automation_variable_bool" "email_inform_owners_directly" {
-  name = "email_inform_owners_directly"
-  resource_group_name = azurerm_resource_group.baseline_resource_group.name
+  name                    = "email_inform_owners_directly"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
   automation_account_name = azurerm_automation_account.expiration-automation.name
-  value = var.email_inform_owners_directly
-  description = "This value will define wether or not owners will be contacted directly on expiring or expired secrets and certificates"
-  
+  value                   = var.email_inform_owners_directly
+  description             = "This value will define wether or not owners will be contacted directly on expiring or expired secrets and certificates"
+
   depends_on = [azurerm_automation_account.expiration-automation]
 }
 
