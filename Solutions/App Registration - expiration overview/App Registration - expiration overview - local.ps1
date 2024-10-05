@@ -3,7 +3,7 @@
 Copyright (c) MMT Consult. All rights reserved. Licensed under the MIT license.
 See LICENSE in the project root for license information.
 
-Version 1.1.0
+Version 1.2.0
 Author: Martin Meiner Tästensen
 contact: support@mmt-consult.dk
 #>
@@ -12,24 +12,84 @@ contact: support@mmt-consult.dk
 ######################################################################
 # Insert the data from the variables on the automation account below # 
 ######################################################################
+# Connect to get access to automation account variables
+$tenant_id = "<insert tenant id<"
+$subscription_id = "<insert subscription id>"
 
-$tenant_id = ""
-$subscription_id = ""
-$application_id = ""
-$secret_cert_days_to_expire = "30"
-$key_vault_resource_name = ""
-$key_vault_secret_key_name = ""
-$logic_app_url = ""
-$storage_account_container_name = "temp-storage"
-$storage_account_temp_storage_account_name = ""
-$baseline_resource_group_name = ""
-$temp_export_path = ""
-$email_inform_owners_directly = $true
-$email_inform_owners_days_with_warnings = "1,2,3,4,5,6,7,14,21,28,30"
-$email_Contact_email_for_all_SPs_with_expired_secrets_status = $true
-$email_Contact_email_for_all_SPs_where_secret_is_about_to_expire = $true
-$email_Contact_email_for_notification_emails = ""
-$email_Contact_email_get_list_of_orphaned_Service_Principals = $true
+#Define automation account varibles - rest of the variables should be collected from the automation account variables
+$var_automationaccount = "<automation account name>" 
+$var_resourcegroupname = "<Resource Group name>"
+
+#$temp_export_path = "/Users/martintastensen/temp"
+
+Connect-AzAccount -Subscription $subscription_id -Tenant $tenant_id 
+
+$tenant_id = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name tenant_id
+$tenant_id = $tenant_id.value
+Write-Output = "tenant_id = $tenant_id"
+
+$subscription_id = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name subscription_id
+$subscription_id = $subscription_id.value
+Write-Output = "subscription_id = $subscription_id "
+
+$application_id = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name application_id
+$application_id = $application_id.value
+Write-Output = "application_id = $application_id "
+
+$secret_cert_days_to_expire = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name secret_cert_days_to_expire
+$secret_cert_days_to_expire = $secret_cert_days_to_expire.Value
+Write-Output = "secret_cert_days_to_expire = $secret_cert_days_to_expire"
+
+$key_vault_resource_name = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name key_vault_resource_name
+$key_vault_resource_name = $key_vault_resource_name.value
+Write-Output = "key_vault_resource_name = $key_vault_resource_name "
+
+$key_vault_secret_key_name = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name key_vault_secret_key_name
+$key_vault_secret_key_name = $key_vault_secret_key_name.value
+Write-Output = "key_vault_secret_key_name = $key_vault_secret_key_name" 
+
+$logic_app_url = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name logic_app_url
+$logic_app_url = $logic_app_url.value
+Write-Output = "logic_app_url = $logic_app_url "
+
+$storage_account_container_name = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name storage_account_container_name
+$storage_account_container_name = $storage_account_container_name.value
+Write-Output = "storage_account_container_name = $storage_account_container_name "
+
+$storage_account_temp_storage_account_name = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name storage_account_temp_storage_account_name
+$storage_account_temp_storage_account_name = $storage_account_temp_storage_account_name.value
+Write-Output = "storage_account_temp_storage_account_name = $storage_account_temp_storage_account_name"
+
+$baseline_resource_group_name = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name baseline_resource_group_name
+$baseline_resource_group_name = $baseline_resource_group_name.value
+Write-Output = "baseline_resource_group_name = $baseline_resource_group_name "
+
+$email_inform_owners_directly = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name email_inform_owners_directly
+$email_inform_owners_directly = $email_inform_owners_directly.Value
+Write-Output "email_inform_owners_directly = $email_inform_owners_directly" 
+
+
+$email_inform_owners_days_with_warnings = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name email_inform_owners_days_with_warnings
+$email_inform_owners_days_with_warnings = $email_inform_owners_days_with_warnings.Value
+Write-Output "email_inform_owners_days_with_warnings = $email_inform_owners_days_with_warnings"
+
+
+$email_Contact_email_for_all_SPs_with_expired_secrets_status = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name email_Contact_email_for_all_SPs_with_expired_secrets_status
+$email_Contact_email_for_all_SPs_with_expired_secrets_status = $email_Contact_email_for_all_SPs_with_expired_secrets_status.value
+Write-Output "email_Contact_email_for_all_SPs_with_expired_secrets_status = $email_Contact_email_for_all_SPs_with_expired_secrets_status"
+
+$email_Contact_email_for_all_SPs_where_secret_is_about_to_expire = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name email_Contact_email_for_all_SPs_where_secret_is_about_to_expire
+$email_Contact_email_for_all_SPs_where_secret_is_about_to_expire = $email_Contact_email_for_all_SPs_where_secret_is_about_to_expire.value
+Write-Output "email_Contact_email_for_all_SPs_where_secret_is_about_to_expire = $email_Contact_email_for_all_SPs_where_secret_is_about_to_expire"
+
+
+$email_Contact_email_for_notification_emails = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name email_Contact_email_for_notification_emails
+$email_Contact_email_for_notification_emails = $email_Contact_email_for_notification_emails.Value
+Write-Output "email_Contact_email_for_notification_emails = $email_Contact_email_for_notification_emails"
+
+$email_Contact_email_get_list_of_orphaned_Service_Principals = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name email_Contact_email_get_list_of_orphaned_Service_Principals
+$email_Contact_email_get_list_of_orphaned_Service_Principals = $email_Contact_email_get_list_of_orphaned_Service_Principals.value
+Write-Output "email_Contact_email_get_list_of_orphaned_Service_Principals = $email_Contact_email_get_list_of_orphaned_Service_Principals"
 
 #########################################
 # Sign-in with system assigned identity # 
@@ -37,11 +97,6 @@ $email_Contact_email_get_list_of_orphaned_Service_Principals = $true
 $stopwatch = [system.diagnostics.stopwatch]::StartNew()
 # process borrowed from MS learn:
 # https://learn.microsoft.com/en-us/azure/automation/enable-managed-identity-for-automation#authenticate-access-with-system-assigned-managed-identity
-
-# Connect to Azure with system-assigned managed identity
-#$AzureContext = (Connect-AzAccount -Subscription $subscription_id -Tenant $tenant_id -Identity).context
-
-Connect-AzAccount -Subscription $subscription_id -Tenant $tenant_id 
 
 ##################################
 # Sign-in with Service Principal # 
@@ -300,7 +355,7 @@ function Send-email-to-users {
     <# 
         Take the result of the expired keys, and inform the registered owners, if such owners exists and if the feature is enabled
     #>  
-
+    $temp_expired_owners = @()
     $trigger = 0 
     $total_number_of_get_list_of_owners_for_expired_keys_ = $get_list_of_owners_for_expired_keys.count 
     Write-Output "Informing owners of expiring secrets"
@@ -313,12 +368,9 @@ function Send-email-to-users {
         $secret_expires_eta = $user.secret_days_until_secret_expires
         $trigger++
 
-        
         if($user.secret_status -eq "expired" -and $user.owner_mail -ne "No_owner") # If the secret is expired, we will send a notification on each run
         {
-            Write-Output "Notify $owner_name about expired secret on $secret_displayname ($trigger/$list_of_expired_secrets)"
-            $body = $user | ConvertTo-Json
-            Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
+            $temp_expired_owners += $user
         }
         elseif ($user.owner_mail -eq "No_owner") {
             Write-Output "No owner found for secret  ($trigger/$list_of_expired_secrets)"
@@ -334,8 +386,15 @@ function Send-email-to-users {
             Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
         }
         else {
-            write-error "Did not match any fulters!: $secret_displayname ($trigger/$list_of_expired_secrets)"
+            write-error "Did not match any filters!: $secret_displayname ($trigger/$list_of_expired_secrets)"
         }        
+    }
+
+    foreach($user in $temp_expired_owners)
+    {
+        Write-Output "Notify $owner_name about expired secret on $secret_displayname ($trigger/$list_of_expired_secrets)"
+        $body = $user | ConvertTo-Json
+        Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
     }
 }
 
@@ -436,17 +495,6 @@ $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.se
 Write-Output "Found $get_list_of_owners_for_expired_keys_count of owners - time elapsed $timespend"
 
 
-# If enabled, it will send an e-mail to all registered owners of a Service Principal
-
-if ($email_inform_owners_directly -eq $true) 
-    { 
-    $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
-    $get_list_of_owners_for_expired_keys_count = $get_list_of_owners_for_expired_keys.count
-    Write-Output "Informing owners about expiring secrets and certificates - List contains $get_list_of_owners_for_expired_keys_count - time elapsed $timespend"
-    $serviceprincipal_owner_expanded = Send-email-to-users # Email users if enabled
-    Write-Output "tried to inform all owners, please check Logic app for result - time elapsed $timespend"
-    } 
-
 # if enabled, it will send an overview to the registered notification e-mail about all service principals with expired secrets and certificated
 if ($email_Contact_email_for_all_SPs_with_expired_secrets_status -eq $true) 
 {   
@@ -471,3 +519,16 @@ if ($email_Contact_email_get_list_of_orphaned_Service_Principals -eq $true)
     Write-Output "Notifying notification address about all orphaned service principals - time elapsed $timespend"
     $export_get_list_of_orphaned_Service_Principals  = get_list_of_orphaned_Service_Principals 
 }
+
+# If enabled, it will send an e-mail to all registered owners of a Service Principal
+if ($email_inform_owners_directly -eq $true) 
+    { 
+    $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+    $get_list_of_owners_for_expired_keys_count = $get_list_of_owners_for_expired_keys.count
+    Write-Output "Informing owners about expiring secrets and certificates - List contains $get_list_of_owners_for_expired_keys_count - time elapsed $timespend"
+    $serviceprincipal_owner_expanded = Send-email-to-users # Email users if enabled
+    Write-Output "tried to inform all owners, please check Logic app for result - time elapsed $timespend"
+    } 
+
+Clear-AzContext -Confirm:$falsey
+Disconnect-MgGraph

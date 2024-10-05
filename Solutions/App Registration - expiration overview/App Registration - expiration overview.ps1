@@ -344,7 +344,7 @@ function Send-email-to-users {
             Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
         }
         else {
-            write-error "Did not match any fulters!: $secret_displayname ($trigger/$list_of_expired_secrets)"
+            write-error "Did not match any filters!: $secret_displayname ($trigger/$list_of_expired_secrets)"
         }        
     }
 }
@@ -446,17 +446,6 @@ $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.se
 Write-Output "Found $get_list_of_owners_for_expired_keys_count of owners - time elapsed $timespend"
 
 
-# If enabled, it will send an e-mail to all registered owners of a Service Principal
-
-if ($email_inform_owners_directly -eq $true) 
-    { 
-    $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
-    $get_list_of_owners_for_expired_keys_count = $get_list_of_owners_for_expired_keys.count
-    Write-Output "Informing owners about expiring secrets and certificates - List contains $get_list_of_owners_for_expired_keys_count - time elapsed $timespend"
-    $serviceprincipal_owner_expanded = Send-email-to-users # Email users if enabled
-    Write-Output "tried to inform all owners, please check Logic app for result - time elapsed $timespend"
-    } 
-
 # if enabled, it will send an overview to the registered notification e-mail about all service principals with expired secrets and certificated
 if ($email_Contact_email_for_all_SPs_with_expired_secrets_status -eq $true) 
 {   
@@ -481,3 +470,13 @@ if ($email_Contact_email_get_list_of_orphaned_Service_Principals -eq $true)
     Write-Output "Notifying notification address about all orphaned service principals - time elapsed $timespend"
     $export_get_list_of_orphaned_Service_Principals  = get_list_of_orphaned_Service_Principals 
 }
+
+# If enabled, it will send an e-mail to all registered owners of a Service Principal
+if ($email_inform_owners_directly -eq $true) 
+    { 
+    $timespend = $stopwatch.Elapsed.Minutes.ToString() + ":" + $stopwatch.Elapsed.seconds.ToString()
+    $get_list_of_owners_for_expired_keys_count = $get_list_of_owners_for_expired_keys.count
+    Write-Output "Informing owners about expiring secrets and certificates - List contains $get_list_of_owners_for_expired_keys_count - time elapsed $timespend"
+    $serviceprincipal_owner_expanded = Send-email-to-users # Email users if enabled
+    Write-Output "tried to inform all owners, please check Logic app for result - time elapsed $timespend"
+    } 
