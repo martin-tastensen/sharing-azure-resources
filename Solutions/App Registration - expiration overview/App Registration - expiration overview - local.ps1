@@ -3,7 +3,7 @@
 Copyright (c) MMT Consult. All rights reserved. Licensed under the MIT license.
 See LICENSE in the project root for license information.
 
-Version 1.2.0
+Version 1.3.0
 Author: Martin Meiner Tästensen
 contact: support@mmt-consult.dk
 #>
