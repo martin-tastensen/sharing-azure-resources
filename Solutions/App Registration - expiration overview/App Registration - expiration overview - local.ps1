@@ -20,8 +20,6 @@ $subscription_id = "<insert subscription id>"
 $var_automationaccount = "<automation account name>" 
 $var_resourcegroupname = "<Resource Group name>"
 
-#$temp_export_path = "/Users/martintastensen/temp"
-
 Connect-AzAccount -Subscription $subscription_id -Tenant $tenant_id 
 
 $tenant_id = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name tenant_id
@@ -91,6 +89,14 @@ $email_Contact_email_get_list_of_orphaned_Service_Principals = Get-AzAutomationV
 $email_Contact_email_get_list_of_orphaned_Service_Principals = $email_Contact_email_get_list_of_orphaned_Service_Principals.value
 Write-Output "email_Contact_email_get_list_of_orphaned_Service_Principals = $email_Contact_email_get_list_of_orphaned_Service_Principals"
 
+$email_define_domains_for_owner_notification_email_enable = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name email_define_domains_for_owner_notification_email_enable
+$email_define_domains_for_owner_notification_email_enable = $email_define_domains_for_owner_notification_email_enable.value
+Write-Output "email_define_domains_for_owner_notification_email = $email_define_domains_for_owner_notification_email_enable"
+
+$email_define_domains_for_owner_notification_email = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name email_define_domains_for_owner_notification_email
+$email_define_domains_for_owner_notification_email = $email_define_domains_for_owner_notification_email.value
+Write-Output "email_define_domains_for_owner_notification_email = $email_define_domains_for_owner_notification_email"
+
 #########################################
 # Sign-in with system assigned identity # 
 #########################################
@@ -148,6 +154,33 @@ Write-Output $tenant_name
 
 # Get list of all Service Principals in the tenant
 $App_registrations = Get-MgApplication -All -Property Id,DisplayName,AppId,AdditionalProperties,PasswordCredentials,keyCredentials,CreatedDateTime
+
+#Get a list of all users, specifically, we need to know what e-mail addresses they have attached to the account
+Write-Output "Getting list of users in Entra ID, this can take some time dependent on the number of accounts in the tenants."
+$allusers = Get-MgUser -All -Property Id,mail,OtherMails,DisplayName,userPrincipalName
+
+# change the domain data to an object
+if($email_define_domains_for_owner_notification_email_enable -eq $true)
+{
+    $email_define_domains_for_owner_notification_email_object = @()
+    $domainsplit = $email_define_domains_for_owner_notification_email.split(',')
+    $domain_counter = 0
+    foreach($domain in $domainsplit)
+    {
+        $domain_counter++
+        $domain_type_priority = $null
+
+        if($domain_counter -eq 1){$domain_type_priority = 'primary'}
+        else{$domain_type_priority = 'secondary'}
+        $prop = [ordered]@{
+            domain                  = $domain
+            domain_priority         = $domain_type_priority
+            }
+            $objcmddata = New-Object -TypeName psobject -Property $prop
+            $email_define_domains_for_owner_notification_email_object += $objcmddata           
+    }
+}
+
 
 <#
 Used to notify the tenant admins by running the workflow that notifices about the generel state of expiring secrets and certiticates.
@@ -301,13 +334,10 @@ function get_list_of_owners_for_expired_keys{
     $service_principal_list_of_owners = @()
     $trigger = 0 
     $total_number_off_Service_principals = $export_SP_data.count 
-    Write-Output "Generating list of owners for all Service Principals in Entra ID"
     foreach($keys in $export_SP_data)
     {
         $trigger++
         $application_name = $keys.sp_displayname
-    
-        Write-Output "Now working on $application_name - working on $trigger/$total_number_off_Service_principals"
         
         $serviceprincipal_owners = Get-MgApplicationOwner -ApplicationId $keys.sp_object_id
 
@@ -333,13 +363,40 @@ function get_list_of_owners_for_expired_keys{
         else {
             foreach($owner in $serviceprincipal_owners){
                 $temp_owner = $null
-                $temp_owner = $keys.PSObject.Copy()
+                $Owner_email = $owner.AdditionalProperties.mail #Default value, will be overwritten if configured with approved e-mail domains
+                $temp_owner = $keys.PSObject.Copy() #Copy the object to avoid powershell re-using the object
+                $owner_lookup = $allusers | Where-Object {$_.UserPrincipalName -eq $owner.AdditionalProperties.userPrincipalName} #Lookup attributes for the user account
+                $account_type = "single_user" #Default value for users, this will be changed if the domain whitelist is enabled
+
+                # Combine e-mail addresses to array, this action will only be run if the email_define_domains_for_owner_notification_email_enable variable is set to true
+                if($email_define_domains_for_owner_notification_email_enable -eq $true)
+                {
+                    # If enabled, we will look at all the e-mail addresses attached to a user accunt, and if the user have an e-mail address
+                    # in an approved domain, we will send the notification e-mail to that address.
+
+                    $account_type = "external_user" #Set as default due to domain whitelist being active. We will still save the user for the general notification mail
+                    $all_email_addresses = @()
+                    foreach($mail_Attribute in $owner_lookup.Mail){$all_email_addresses += $mail_Attribute}
+                    foreach($mail_OtherMailAttribute in $owner_lookup.OtherMails){$all_email_addresses += $mail_OtherMailAttribute}         
+                    
+                    foreach($mail_address in $all_email_addresses)
+                    {
+                        $maildomain = $mail_address.split('@')[1]
+                        if($email_define_domains_for_owner_notification_email_object.domain -contains $maildomain)
+                        {
+                            #If the user have an e-mail address in an approved domain, then the notification mail will be send to this address.
+                            $Owner_email = $mail_address
+                            $account_type = "single_user"
+                            break
+                        }
+                    }
+                }
 
                 $temp_owner | Add-Member -NotePropertyName owner_displayname -NotePropertyValue $owner.AdditionalProperties.displayName 
-                $temp_owner | Add-Member -NotePropertyName owner_mail -NotePropertyValue $owner.AdditionalProperties.mail
+                $temp_owner | Add-Member -NotePropertyName owner_mail -NotePropertyValue $Owner_email
                 $temp_owner | Add-Member -NotePropertyName owner_userprincipalname -NotePropertyValue $owner.AdditionalProperties.userPrincipalName
                 $temp_owner | Add-Member -NotePropertyName owner_id -NotePropertyValue $owner.id
-                $temp_owner | Add-Member -NotePropertyName request_type -NotePropertyValue "single_user"
+                $temp_owner | Add-Member -NotePropertyName request_type -NotePropertyValue $account_type
                 $temp_owner | Add-Member -NotePropertyName blob_file_name -NotePropertyValue "NA"
                 $temp_owner | Add-Member -NotePropertyName mail_subject -NotePropertyValue "NA"
 
@@ -368,7 +425,7 @@ function Send-email-to-users {
         $secret_expires_eta = $user.secret_days_until_secret_expires
         $trigger++
 
-        if($user.secret_status -eq "expired" -and $user.owner_mail -ne "No_owner") # If the secret is expired, we will send a notification on each run
+        if($user.secret_status -eq "expired" -and $user.owner_mail -ne "No_owner" -and $user.request_type -ne "external_user") # If the secret is expired, we will send a notification on each run
         {
             $temp_expired_owners += $user
         }
@@ -379,7 +436,7 @@ function Send-email-to-users {
         {
             Write-Output "ETA for expiration not within notification values. $owner_name have not been warned today about $secret_displayname in expiring in $secret_expires_eta days ($trigger/$list_of_expired_secrets)"
         }
-        elseif($email_inform_owners_days_with_warnings -contains $user.secret_days_until_secret_expires -and $user.owner_mail -ne "No_owner") 
+        elseif($email_inform_owners_days_with_warnings -contains $user.secret_days_until_secret_expires -and $user.owner_mail -ne "No_owner" -and $user.request_type -ne "external_user") 
         {
             Write-Output "Notify $owner_name about secret on $secret_displayname in $secret_expires_eta days ($trigger/$list_of_expired_secrets)"
             $body = $user | ConvertTo-Json
@@ -396,6 +453,8 @@ function Send-email-to-users {
         $body = $user | ConvertTo-Json
         Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
     }
+
+    $test
 }
 
 function find_all_SP_with_expired_keys_and_secrets {
@@ -415,7 +474,7 @@ function find_all_SP_with_expired_keys_and_secrets {
         }
     }
 
-    $returndata = $returndata | Select-Object sp_displayname,sp_object_id,owner_userprincipalname,sp_application_id,secret_type,secret_status,secret_DisplayName,secret_StartDateTime,secret_EndDateTime,secret_days_until_secret_expires
+    $returndata = $returndata | Select-Object sp_displayname,sp_object_id,owner_userprincipalname,owner_mail,sp_application_id,secret_type,secret_status,secret_DisplayName,secret_StartDateTime,secret_EndDateTime,secret_days_until_secret_expires
     $export_request_type = "find_all_SP_with_expired_keys_and_secrets"
     $export_file_name = "Overview - all expired secrets and keys"
     send_reports_to_governance_team = $returndata, $export_file_name, $export_request_type | Out-Null
@@ -530,5 +589,5 @@ if ($email_inform_owners_directly -eq $true)
     Write-Output "tried to inform all owners, please check Logic app for result - time elapsed $timespend"
     } 
 
-Clear-AzContext -Confirm:$falsey
+Clear-AzContext -Confirm:$false
 Disconnect-MgGraph

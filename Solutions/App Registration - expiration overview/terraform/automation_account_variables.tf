@@ -176,3 +176,23 @@ resource "azurerm_automation_variable_string" "email_Contact_email_for_notificat
   depends_on = [azurerm_automation_account.expiration-automation]
 }
 
+resource "azurerm_automation_variable_string" "email_define_domains_for_owner_notification_email" {
+  name                    = "email_define_domains_for_owner_notification_email"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = var.email_define_domains_for_owner_notification_email
+  description             = "This is the e-mail address that should be used to send a message about all the expiring secrets/certs where an owner could not be found: Note: they will be send as an attachement in CSV format"
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+
+resource "azurerm_automation_variable_bool" "email_define_domains_for_owner_notification_email_enable" {
+  name                    = "email_define_domains_for_owner_notification_email_enable"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = var.email_define_domains_for_owner_notification_email_enable
+  description             = "If true, the script will look at the domains in the var.email_define_domains_for_owner_notification_email and only send e-mail to users who have an e-mail in this domain at either the primary e-mail field or the othermails field in entra ID"
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+

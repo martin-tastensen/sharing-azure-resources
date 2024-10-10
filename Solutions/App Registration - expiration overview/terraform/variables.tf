@@ -41,6 +41,17 @@ variable "secret_cert_days_to_expire" {
 ####################################
 ##  Baseline resource information ##
 ####################################
+variable "email_define_domains_for_owner_notification_email" {
+  description = "When looking through owners, it will own send an e-mail if the owner is from one of these approved domains"
+  type        = string
+  default     = "approved_domain_1,approved_domain_2,approved_domain_3"
+}
+
+variable "email_define_domains_for_owner_notification_email_enable" {
+  description = "If true, the script will look at the domains in the var.email_define_domains_for_owner_notification_email and only send e-mail to users who have an e-mail in this domain at either the primary e-mail field or the othermails field in entra ID"
+  type        = bool
+  default     = true
+}
 
 variable "email_Contact_email_for_notification_emails" {
   description = "This is the e-mail address that should be used to send a message about all the expiring secrets/certs where an owner could not be found: Note: they will be send as an attachement in CSV format"
