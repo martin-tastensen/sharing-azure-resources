@@ -20,8 +20,6 @@ $subscription_id = "<insert subscription id>"
 $var_automationaccount = "<automation account name>" 
 $var_resourcegroupname = "<Resource Group name>"
 
-#$temp_export_path = "/Users/martintastensen/temp"
-
 Connect-AzAccount -Subscription $subscription_id -Tenant $tenant_id 
 
 $tenant_id = Get-AzAutomationVariable -ResourceGroupName $var_resourcegroupname -AutomationAccountName $var_automationaccount -Name tenant_id
@@ -336,13 +334,10 @@ function get_list_of_owners_for_expired_keys{
     $service_principal_list_of_owners = @()
     $trigger = 0 
     $total_number_off_Service_principals = $export_SP_data.count 
-    Write-Output "Generating list of owners for all Service Principals in Entra ID"
     foreach($keys in $export_SP_data)
     {
         $trigger++
         $application_name = $keys.sp_displayname
-    
-        Write-Output "Now working on $application_name - working on $trigger/$total_number_off_Service_principals"
         
         $serviceprincipal_owners = Get-MgApplicationOwner -ApplicationId $keys.sp_object_id
 
@@ -430,7 +425,7 @@ function Send-email-to-users {
         $secret_expires_eta = $user.secret_days_until_secret_expires
         $trigger++
 
-        if($user.secret_status -eq "expired" -and $user.owner_mail -ne "No_owner") # If the secret is expired, we will send a notification on each run
+        if($user.secret_status -eq "expired" -and $user.owner_mail -ne "No_owner" -and $user.request_type -ne "external_user") # If the secret is expired, we will send a notification on each run
         {
             $temp_expired_owners += $user
         }
@@ -441,7 +436,7 @@ function Send-email-to-users {
         {
             Write-Output "ETA for expiration not within notification values. $owner_name have not been warned today about $secret_displayname in expiring in $secret_expires_eta days ($trigger/$list_of_expired_secrets)"
         }
-        elseif($email_inform_owners_days_with_warnings -contains $user.secret_days_until_secret_expires -and $user.owner_mail -ne "No_owner") 
+        elseif($email_inform_owners_days_with_warnings -contains $user.secret_days_until_secret_expires -and $user.owner_mail -ne "No_owner" -and $user.request_type -ne "external_user") 
         {
             Write-Output "Notify $owner_name about secret on $secret_displayname in $secret_expires_eta days ($trigger/$list_of_expired_secrets)"
             $body = $user | ConvertTo-Json
@@ -458,6 +453,8 @@ function Send-email-to-users {
         $body = $user | ConvertTo-Json
         Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
     }
+
+    $test
 }
 
 function find_all_SP_with_expired_keys_and_secrets {
