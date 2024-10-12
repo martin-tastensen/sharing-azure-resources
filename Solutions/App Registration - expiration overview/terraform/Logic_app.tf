@@ -73,7 +73,7 @@ resource "azapi_resource" "Azure_communication_service_API_Connection" {
   })
 }
 
-####################################################################################
+###################################################################################
 
 
 resource "azapi_resource" "Azure_Logic_app_blob_storage_connection" {
@@ -93,7 +93,6 @@ resource "azapi_resource" "Azure_Logic_app_blob_storage_connection" {
         values = {}
       }
 
-
       api = {
         name        = "azureblob"
         displayName = "Azure Blob Storage"
@@ -110,7 +109,6 @@ resource "azapi_resource" "Azure_Logic_app_blob_storage_connection" {
 resource "azurerm_logic_app_trigger_http_request" "wf_la_expiration_notification" {
   name         = "When a HTTP request is received"
   logic_app_id = azurerm_logic_app_workflow.la_expiration_notification.id
-
 
   schema = <<SCHEMA
 {
@@ -193,7 +191,6 @@ SCHEMA
 resource "azurerm_logic_app_action_custom" "if_else_statement" {
   name         = "if_else_condition"
   logic_app_id = azurerm_logic_app_workflow.la_expiration_notification.id
-
 
   body = <<BODY
 {

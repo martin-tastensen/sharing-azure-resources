@@ -38,9 +38,26 @@ variable "secret_cert_days_to_expire" {
   default     = "30"
 }
 
+#################################
+##  Define notification e-mail ##
+#################################
+
+variable "Communication_service_naming_domain_type" {
+  description = "Type in your custom domain (eg. notify.contoso.com), if you want it to be the domain you are using for the solution. Leave it as 'AzureManagedDomain' to create a Microsoft managed domain NOTE: There are a strict quota limit on this type."
+  type        = string
+  default     = "AzureManagedDomain"
+}
+
+variable "Communication_service_naming_domain_created_dns_records" {
+  description = "Terraform will only create the last connections if this value is set to true (default: false). "
+  type        = bool
+  default     = false
+}
+
 ####################################
 ##  Baseline resource information ##
 ####################################
+
 variable "email_define_domains_for_owner_notification_email" {
   description = "When looking through owners, it will own send an e-mail if the owner is from one of these approved domains"
   type        = string
@@ -95,6 +112,12 @@ variable "Communication_service_naming_convention" {
   default     = "<shortname for cummincation service items>"
 }
 
+variable "data_location_region" {
+  description = "on creation of the communication service, a location is required. This is not a datacenter but a regio, posibilities are Africa, Asia Pacific, Australia, Brazil, Canada, Europe, France, Germany, India, Japan, Korea, Norway, Switzerland, UAE, UK and United States"
+  type        = string
+  default     = "Europe"
+}
+
 variable "Service_Principal_name" {
   description = "Service Principal name the application_id value. Used for connecting to Entra ID and collecting secrets and certificates"
   type        = string
@@ -118,4 +141,3 @@ variable "location" {
   type        = string
   default     = "sweden central"
 }
-

@@ -1,7 +1,7 @@
 resource "azurerm_communication_service" "mmt-notification-service" {
   name                = "${var.Communication_service_naming_convention}-notify-service"
   resource_group_name = azurerm_resource_group.baseline_resource_group.name
-  data_location       = "United States"
+  data_location       = var.data_location_region
   tags                = local.tags
   depends_on = [
     azurerm_resource_group.baseline_resource_group
@@ -11,7 +11,7 @@ resource "azurerm_communication_service" "mmt-notification-service" {
 resource "azurerm_email_communication_service" "mmt-email-communication-service" {
   name                = "${var.Communication_service_naming_convention}-email-communication-service"
   resource_group_name = azurerm_resource_group.baseline_resource_group.name
-  data_location       = "United States"
+  data_location       = var.data_location_region
   tags                = local.tags
   depends_on = [
     azurerm_resource_group.baseline_resource_group
@@ -19,10 +19,10 @@ resource "azurerm_email_communication_service" "mmt-email-communication-service"
 }
 
 resource "azurerm_email_communication_service_domain" "AzureManagedDomain" {
-  name             = "AzureManagedDomain"
+  name             = local.communication_service_domain_type.domaintype.name
   email_service_id = azurerm_email_communication_service.mmt-email-communication-service.id
 
-  domain_management = "AzureManaged"
+  domain_management = local.communication_service_domain_type.domaintype.domain_management
   tags              = local.tags
   depends_on = [
     azurerm_resource_group.baseline_resource_group,
@@ -31,6 +31,7 @@ resource "azurerm_email_communication_service_domain" "AzureManagedDomain" {
 }
 
 resource "azurerm_communication_service_email_domain_association" "update_linked_domain" {
+  count                    = local.communication_service_domain_type.Create_link.status ? 1 : 0 # Requires all DNS settings to be configured in public DNS
   communication_service_id = azurerm_communication_service.mmt-notification-service.id
   email_service_domain_id  = azurerm_email_communication_service_domain.AzureManagedDomain.id
   depends_on = [
