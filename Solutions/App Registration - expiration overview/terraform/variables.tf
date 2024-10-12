@@ -38,6 +38,22 @@ variable "secret_cert_days_to_expire" {
   default     = "30"
 }
 
+#################################
+##  Define notification e-mail ##
+#################################
+
+variable "Communication_service_naming_domain_type" {
+  description = "Type in your custom domain (eg. notify.contoso.com), if you want it to be the domain you are using for the solution. Leave it as 'AzureManagedDomain' to create a Microsoft managed domain NOTE: There are a strict quota limit on this type."
+  type        = string
+  default     = "AzureManagedDomain"
+}
+
+variable "Communication_service_naming_domain_created_dns_records" {
+  description = "Terraform will only create the last connections if this value is set to true (default: false). "
+  type        = bool
+  default     = false
+}
+
 ####################################
 ##  Baseline resource information ##
 ####################################
@@ -93,6 +109,12 @@ variable "Communication_service_naming_convention" {
   description = "This is a short name, that will be used in front of each of the communication services ressources. Name is used for ressources, so you can use it if you have a naming convetion etc."
   type        = string
   default     = "<shortname for cummincation service items>"
+}
+
+variable "data_location_region" {
+  description = "on creation of the communication service, a location is required. This is not a datacenter but a regio, posibilities are Africa, Asia Pacific, Australia, Brazil, Canada, Europe, France, Germany, India, Japan, Korea, Norway, Switzerland, UAE, UK and United States"
+  type        = string
+  default     = "Europe"
 }
 
 variable "Service_Principal_name" {

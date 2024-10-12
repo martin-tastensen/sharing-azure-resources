@@ -4,6 +4,22 @@ locals {
     "date"        = "19-08-2024"
   }
 
+  communication_service_domain_type = {
+    domaintype = var.Communication_service_naming_domain_type == "AzureManagedDomain" ? {
+      "name"              = "AzureManagedDomain",
+      "domain_management" = "AzureManaged"
+      } : {
+      "name"              = var.Communication_service_naming_domain_type,
+      "domain_management" = "CustomerManaged"
+    },
+    Create_link = var.Communication_service_naming_domain_type == "AzureManagedDomain" ? {
+      "status" = true
+      } : {
+      "status" = var.Communication_service_naming_domain_created_dns_records
+    }
+  }
+
+  #Name and versions of powershell modules
   microsoft_graph_modules = {
     modules = [
       {

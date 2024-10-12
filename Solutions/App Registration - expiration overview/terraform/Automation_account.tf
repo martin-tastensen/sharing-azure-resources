@@ -66,3 +66,22 @@ resource "azurerm_automation_powershell72_module" "Microsoft-modules" {
 
   depends_on = [azurerm_automation_account.expiration-automation]
 }
+
+resource "azurerm_automation_schedule" "Onetime" {
+  name                    = "onetime-schedule"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  frequency               = "OneTime"
+  description             = "Onetime job, that will update and install all required modules for the script to run"
+  
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+
+resource "azurerm_automation_job_schedule" "example" {
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  schedule_name           = azurerm_automation_schedule.Onetime.name
+  runbook_name            = azurerm_automation_runbook.update-az-modules.name
+
+depends_on = [ azurerm_automation_schedule.Onetime ]
+}
