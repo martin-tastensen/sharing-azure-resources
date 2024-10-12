@@ -1,7 +1,7 @@
 locals {
   tags = {
     "Environment" = "Production"
-    "Created by" = data.azuread_user.current_user.user_principal_name
+    "Created by"  = data.azuread_user.current_user.user_principal_name
   }
 
   communication_service_domain_type = {

@@ -73,10 +73,10 @@ resource "azurerm_automation_schedule" "Onetime" {
   automation_account_name = azurerm_automation_account.expiration-automation.name
   frequency               = "OneTime"
   description             = "Onetime job, that will update and install all required modules for the script to run"
-  start_time              =  timeadd(timestamp(), "10m")
+  start_time              = timeadd(timestamp(), "10m")
 
   lifecycle {
-    ignore_changes = [ start_time ]
+    ignore_changes = [start_time]
   }
 
   depends_on = [azurerm_automation_account.expiration-automation]
