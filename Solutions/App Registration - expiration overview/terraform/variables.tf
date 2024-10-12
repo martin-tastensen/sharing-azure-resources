@@ -57,6 +57,7 @@ variable "Communication_service_naming_domain_created_dns_records" {
 ####################################
 ##  Baseline resource information ##
 ####################################
+
 variable "email_define_domains_for_owner_notification_email" {
   description = "When looking through owners, it will own send an e-mail if the owner is from one of these approved domains"
   type        = string
@@ -140,4 +141,3 @@ variable "location" {
   type        = string
   default     = "sweden central"
 }
-

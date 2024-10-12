@@ -1,7 +1,7 @@
 locals {
   tags = {
     "Environment" = "Production"
-    "date"        = "19-08-2024"
+    "Created by" = data.azuread_user.current_user.user_principal_name
   }
 
   communication_service_domain_type = {
