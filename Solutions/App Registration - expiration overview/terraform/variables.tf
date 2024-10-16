@@ -21,7 +21,7 @@ variable "email_Contact_email_for_all_SPs_where_secret_is_about_to_expire" {
 }
 
 variable "email_inform_owners_directly" {
-  description = "This boolean will define wether or not owners will be contacted directly on expiring or expired secrets and certificates. All owners of the specific SP will be contacted. The owners will be contacted on the days specified in the 'email_inform_owners_days_with_warnings' variable (default: true)"
+  description = "This boolean will define wether or not owners will be contacted directly on expiring or expired secrets and certificates. All owners of the specific SP will be contacted, but owners where the secret or certificate has not yet expired will be contacted first. The owners will be contacted on the days specified in the 'email_inform_owners_days_with_warnings' variable (default: true)"
   type        = bool
   default     = true
 }
@@ -112,12 +112,6 @@ variable "Communication_service_naming_convention" {
   default     = "<shortname for cummincation service items>"
 }
 
-variable "data_location_region" {
-  description = "on creation of the communication service, a location is required. This is not a datacenter but a regio, posibilities are Africa, Asia Pacific, Australia, Brazil, Canada, Europe, France, Germany, India, Japan, Korea, Norway, Switzerland, UAE, UK and United States"
-  type        = string
-  default     = "Europe"
-}
-
 variable "Service_Principal_name" {
   description = "Service Principal name the application_id value. Used for connecting to Entra ID and collecting secrets and certificates"
   type        = string
@@ -131,13 +125,19 @@ variable "key_vault_secret_key_name" {
 }
 
 variable "logic_app_communication_service_primary_connection_string" {
-  description = "Identity of the secret used for the communication service. The name is irrelevant, but for good measure you can still choose on if you wish."
+  description = "Identity of the secret used for the communication service."
   type        = string
   default     = "communication-service-primary-connection-string"
 }
 
 variable "location" {
-  description = "Define the datacenter where the solution should be deployed"
+  description = "Define the datacenter where the resources should be deployed"
   type        = string
   default     = "sweden central"
+}
+
+variable "data_location_region" {
+  description = "on creation of the communication service, a location is required. This is not a datacenter but a regio, posibilities are Africa, Asia Pacific, Australia, Brazil, Canada, Europe, France, Germany, India, Japan, Korea, Norway, Switzerland, UAE, UK and United States"
+  type        = string
+  default     = "Europe"
 }
