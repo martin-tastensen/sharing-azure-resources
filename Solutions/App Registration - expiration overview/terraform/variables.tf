@@ -67,7 +67,7 @@ variable "email_define_domains_for_owner_notification_email" {
 variable "email_define_domains_for_owner_notification_email_enable" {
   description = "If true, the script will look at the domains in the var.email_define_domains_for_owner_notification_email and only send e-mail to users who have an e-mail in this domain at either the primary e-mail field or the othermails field in entra ID"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "email_Contact_email_for_notification_emails" {
