@@ -3,7 +3,7 @@
 | Description  	| Value                   	|
 |--------------	|-------------------------	|
 | Version      	| 1.4.2                   	|
-| Release date 	| 16. oct 2024            	|
+| Release date 	| 16. May 2025            	|
 | Author       	| Martin Meiner Tastensen 	|
 
 ## intro
