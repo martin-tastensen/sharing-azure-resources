@@ -2,7 +2,7 @@
 ## Versioninfo
 | Description  	| Value                   	|
 |--------------	|-------------------------	|
-| Version      	| 1.4.1                   	|
+| Version      	| 1.4.2                   	|
 | Release date 	| 16. oct 2024            	|
 | Author       	| Martin Meiner Tastensen 	|
 
@@ -20,7 +20,7 @@ All changes will be saved in different versions, which should offer anyone the o
 
 ![Design](https://usercontent.one/wp/www.mmt-consult.dk/wp-content/uploads/2024/08/Intra-ID-Service-Principals_-Audit-expiring-secrets-and-certificates-Design-drawing-980x690.png)
 
-For a full explanation of this repository, please read through the blog post here at: [mmt-consult.dk](https://www.mmt-consult.dk/intra-id-service-principals-audit-expiring-secrets-and-certificates/)
+For a full explanation of this repository, please read through the blog post here at: [mmt-consult.dk](https://www.mmt-consult.dk/entra-id-service-principals-audit-expiring-secrets-and-certificates-expanded/)
 
 
 
