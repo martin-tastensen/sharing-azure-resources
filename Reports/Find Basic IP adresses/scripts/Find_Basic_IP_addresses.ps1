@@ -12,7 +12,7 @@ Param(
     [parameter(mandatory = $true, HelpMessage = "Provide tenantid for the specific tenant")] 
     [string]$tenantid,
 
-    [parameter(mandatory = $false, HelpMessage = "Path for CSV export file - default path is: C:\Temp\empty vnet list.csv")] 
+    [parameter(mandatory = $false, HelpMessage = "Path for CSV export file")] 
     [string]$exportpath = $false,
 
     [parameter(mandatory = $false, HelpMessage = "change to false if you don't want it to open the result in a browser")] 
@@ -41,7 +41,7 @@ Resources
 | project public_ip, IpAddress, ipsku, location, resourceGroup, subscriptionId,attachedName, attachedRG,attachedType,attachedTo
 '
 
-$data = Search-AzGraph -Query $query 
+$data = Search-AzGraph -Query $query -First 1000
 
 if($openbrowser -eq $true)
 {
