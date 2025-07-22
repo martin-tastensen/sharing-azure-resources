@@ -1,0 +1,8 @@
+title: Find Basic IP addresses
+description: Find all Basic SKU ip addresses for the upcoming 30. September deadline.
+created: "22/07/2025"
+Author: Martin Meiner Tästensen
+tags:
+  - "IP Addresses"
+technologies: 
+  - Powershell
