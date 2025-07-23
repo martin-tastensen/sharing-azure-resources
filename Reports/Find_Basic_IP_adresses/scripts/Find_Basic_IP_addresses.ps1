@@ -78,7 +78,7 @@ $datatable = $data | Select-Object public_ip, IpAddress, ipsku, location, resour
 </style>
 '@
 
-    $html = $datatable | ConvertTo-Html -Title "Azure Public IPs" -PreContent "<h1>Liste over Basic Public IPs</h1>" | Out-String
+    $html = $datatable | ConvertTo-Html -Title "Azure Public IPs" -PreContent "<h1>List over Basic Public IPs</h1>" | Out-String
     $html = $css + $html
 
     $tempFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "$(New-Guid).html")
