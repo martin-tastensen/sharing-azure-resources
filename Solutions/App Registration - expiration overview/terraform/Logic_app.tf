@@ -248,7 +248,7 @@ resource "azurerm_logic_app_action_custom" "if_else_statement" {
                       }
                   },
                   "method": "get",
-                  "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('${azurerm_storage_container.blob_storage_temp.storage_account_name}'))}/foldersV2/@{encodeURIComponent(encodeURIComponent('JTJmdGVtcC1zdG9yYWdl'))}",
+                  "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('${azurerm_storage_account.storage_account_temp_storage.name}'))}/foldersV2/@{encodeURIComponent(encodeURIComponent('JTJmdGVtcC1zdG9yYWdl'))}",
                   "queries": {
                       "nextPageMarker": "",
                       "useFlatListing": false
@@ -268,7 +268,7 @@ resource "azurerm_logic_app_action_custom" "if_else_statement" {
                       }
                   },
                   "method": "get",
-                  "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('${azurerm_storage_container.blob_storage_temp.storage_account_name}'))}/files/@{encodeURIComponent(encodeURIComponent('/${azurerm_storage_container.blob_storage_temp.name}/',triggerBody()?['blob_file_name']))}/content",
+                  "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('${azurerm_storage_account.storage_account_temp_storage.name}'))}/files/@{encodeURIComponent(encodeURIComponent('/${azurerm_storage_container.blob_storage_temp.name}/',triggerBody()?['blob_file_name']))}/content",
                   "queries": {
                       "inferContentType": true
                   }
@@ -295,7 +295,7 @@ resource "azurerm_logic_app_action_custom" "if_else_statement" {
                                             {
                                                 "contentInBase64": "@{base64(body('Get_blob_content_(V2)'))}",
                                                 "contentType": "csv",
-                                                "name": "@triggerBody()?['blob_file_name']"
+                                                "name": "@{concat(triggerBody()?['request_type'], '.csv')}"
                                             }
                                         ],
                                         "content": {
@@ -362,7 +362,7 @@ resource "azurerm_logic_app_action_custom" "if_else_statement" {
                                             {
                                                 "contentInBase64": "@{base64(body('Get_blob_content_(V2)'))}",
                                                 "contentType": "csv",
-                                                "name": "@triggerBody()?['blob_file_name']"
+                                                "name": "@{concat(triggerBody()?['request_type'], '.csv')}"
                                             }
                                         ],
                                         "content": {
@@ -429,7 +429,7 @@ resource "azurerm_logic_app_action_custom" "if_else_statement" {
                                             {
                                                 "contentInBase64": "@{base64(body('Get_blob_content_(V2)'))}",
                                                 "contentType": "csv",
-                                                "name": "@triggerBody()?['blob_file_name']"
+                                                "name": "@{concat(triggerBody()?['request_type'], '.csv')}"
                                             }
                                         ],
                                         "content": {
@@ -503,10 +503,10 @@ resource "azurerm_logic_app_action_custom" "if_else_statement" {
     "runAfter": {}
 }
 BODY
+
   depends_on = [
     azurerm_logic_app_trigger_http_request.wf_la_expiration_notification,
     azapi_resource.Azure_communication_service_API_Connection,
     azapi_resource.Azure_Logic_app_blob_storage_connection,
   ]
 }
- 

@@ -1,21 +1,24 @@
 locals {
-  tags = {
-    "Environment" = "Production"
-    "Created by"  = data.azuread_user.current_user.user_principal_name
+  base_tags = {
+    "Source"     = "https://github.com/martin-tastensen/sharing-azure-resources"
+    "Created by" = data.azuread_user.current_user.user_principal_name
   }
 
+  tags = merge(local.base_tags, var.custom_tags)
+
   communication_service_domain_type = {
-    domaintype = var.Communication_service_naming_domain_type == "AzureManagedDomain" ? {
-      "name"              = "AzureManagedDomain",
-      "domain_management" = "AzureManaged"
+    domaintype = var.domain_type["Communication_service_naming_domain_type"].value_string == "AzureManagedDomain" ? {
+      name              = "AzureManagedDomain"
+      domain_management = "AzureManaged"
       } : {
-      "name"              = var.Communication_service_naming_domain_type,
-      "domain_management" = "CustomerManaged"
-    },
-    Create_link = var.Communication_service_naming_domain_type == "AzureManagedDomain" ? {
-      "status" = true
+      name              = var.domain_type["Communication_service_naming_domain_type"].value_string
+      domain_management = "CustomerManaged"
+    }
+
+    Create_link = var.domain_type["Communication_service_naming_domain_type"].value_string == "AzureManagedDomain" ? {
+      status = true
       } : {
-      "status" = var.Communication_service_naming_domain_created_dns_records
+      status = var.domain_type["Communication_service_naming_domain_created_dns_records"].value_bool
     }
   }
 

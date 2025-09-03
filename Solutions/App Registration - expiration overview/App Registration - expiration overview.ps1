@@ -26,6 +26,7 @@ $email_Contact_email_for_notification_emails = Get-AutomationVariable -Name emai
 $email_Contact_email_get_list_of_orphaned_Service_Principals = Get-AutomationVariable -Name email_Contact_email_get_list_of_orphaned_Service_Principals
 $email_define_domains_for_owner_notification_email = Get-AutomationVariable -Name email_define_domains_for_owner_notification_email
 $email_define_domains_for_owner_notification_email_enable = Get-AutomationVariable -Name email_define_domains_for_owner_notification_email_enable
+$email_Contact_email_for_notification_emails_add_date = Get-AutomationVariable -Name email_Contact_email_for_notification_emails_add_date
 
 Write-Output "tenant id: $tenant_id"
 Write-Output "subscription_id: $subscription_id"
@@ -92,6 +93,8 @@ Write-Output "Connecting to EntraID using Service Principal - if this step fails
 Connect-MgGraph -AccessToken ($token |ConvertTo-SecureString -AsPlainText -Force) -NoWelcome
 
 #############################################################################################################################
+## Everything below here should be identical ##
+#############################################################################################################################
 
 # Calculate when the date for when to send a warning
 $date_today = Get-Date
@@ -108,7 +111,7 @@ $App_registrations = Get-MgApplication -All -Property Id,DisplayName,AppId,Addit
 
 #Get a list of all users, specifically, we need to know what e-mail addresses they have attached to the account
 Write-Output "Getting list of users in Entra ID, this can take some time dependent on the number of accounts in the tenants."
-$allusers = Get-MgUser -All -Property Id,mail,OtherMails,DisplayName,userPrincipalName
+$allusers = Get-MgUser -All -Property Id,mail,OtherMails,DisplayName,userPrincipalName,AccountEnabled
 
 # change the domain data to an object
 if($email_define_domains_for_owner_notification_email_enable -eq $true)
@@ -132,11 +135,11 @@ if($email_define_domains_for_owner_notification_email_enable -eq $true)
     }
 }
 
-
 <#
 Used to notify the tenant admins by running the workflow that notifices about the generel state of expiring secrets and certiticates.
 This function is used by all those other functions in the script, so please note: a change here will be a change to all messages except the ones send to SP owners
 #>
+
 function send_reports_to_governance_team {
     # Identify and index the storage account
     $storage_account_info = Get-AzStorageAccount -StorageAccountName $storage_account_temp_storage_account_name -ResourceGroupName $baseline_resource_group_name
@@ -148,49 +151,57 @@ function send_reports_to_governance_team {
 
     $returndata | Export-Csv -path $final_local_export_path -Delimiter ';' -Encoding unicode
 
-    $blob_upload = @{
-        File             = $final_local_export_path
-        Container        = $storage_account_container_name
-        Blob             = $export_request_type + ".csv"
-        Context          = $storage_account_info_context
-        StandardBlobTier = 'Hot'
-    }
+    # Split the list to send an e-mail to each mail
+    $maillist = $email_Contact_email_for_notification_emails -split ','
 
-    $exported_data_url = Set-AzStorageBlobContent @blob_upload -Force
+    foreach($email in $maillist)
+    { 
+        $exportdata = $null
+        $filename = ($email.Replace("@", "_")) + "/" +$export_request_type + ".csv"
 
-    $export_properties = [ordered]@{
-        sp_displayname                  = ""
-        sp_id                           = ""
-        secret_status                   = ""
-        secret_expiry_eta               = ""
-        secret_type                     = ""
-        secret_Displayname              = ""
-        secret_expiredDate              = ""
-        secret_Startdate                = ""
-        secret_hint                     = ""
-        secret_text                     = ""
-        owner_displayname               = ""
-        owner_mail                      = $email_Contact_email_for_notification_emails
-        owner_userprincipalname         = ""
-        owner_id                        = ""
-        tenant_name                     = ""
-        tenant_id                       = $tenant_id
-        request_type                    = $export_request_type
-        blob_file_name                  = $export_request_type + ".csv"
-        mail_subject                    = $export_file_name
+        $blob_upload = @{
+            File             = $final_local_export_path
+            Container        = $storage_account_container_name
+            Blob             = $filename
+            Context          = $storage_account_info_context
+            StandardBlobTier = 'Hot'
         }
-        $objcmddata = New-Object -TypeName psobject -Property $export_properties
-        $exportdata += $objcmddata               
 
+        $exported_data_url = Set-AzStorageBlobContent @blob_upload -Force
 
-        $body = $exportdata | ConvertTo-Json
-        Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16' 
+        $export_properties = [ordered]@{
+            sp_displayname                  = ""
+            sp_id                           = ""
+            secret_status                   = ""
+            secret_expiry_eta               = ""
+            secret_type                     = ""
+            secret_Displayname              = ""
+            secret_expiredDate              = ""
+            secret_Startdate                = ""
+            secret_hint                     = ""
+            secret_text                     = ""
+            owner_displayname               = ""
+            owner_mail                      = $email
+            owner_userprincipalname         = ""
+            owner_id                        = ""
+            tenant_name                     = ""
+            tenant_id                       = $tenant_id
+            request_type                    = $export_request_type
+            blob_file_name                  = $filename
+            mail_subject                    = $export_file_name
+            }
+            $objcmddata = New-Object -TypeName psobject -Property $export_properties
+            $exportdata += $objcmddata          
+            $body = $exportdata | ConvertTo-Json
+            Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16' 
+    }
 }
 
 <#
 Pull the complete list of secrets and certificates that are about to expired, or already expired.
 Both arrays will be used later in the script. 
 #>
+
 function get-all-expired-keys {
     $returndata = @()
 
@@ -348,6 +359,7 @@ function get_list_of_owners_for_expired_keys{
                 $temp_owner | Add-Member -NotePropertyName owner_userprincipalname -NotePropertyValue $owner.AdditionalProperties.userPrincipalName
                 $temp_owner | Add-Member -NotePropertyName owner_id -NotePropertyValue $owner.id
                 $temp_owner | Add-Member -NotePropertyName request_type -NotePropertyValue $account_type
+                $temp_owner | Add-Member -NotePropertyName account_enabled -NotePropertyValue $owner_lookup.AccountEnabled
                 $temp_owner | Add-Member -NotePropertyName blob_file_name -NotePropertyValue "NA"
                 $temp_owner | Add-Member -NotePropertyName mail_subject -NotePropertyValue "NA"
 
@@ -363,6 +375,7 @@ function Send-email-to-users {
     <# 
         Take the result of the expired keys, and inform the registered owners, if such owners exists and if the feature is enabled
     #>  
+
     $temp_expired_owners = @()
     $trigger = 0 
     $total_number_of_get_list_of_owners_for_expired_keys_ = $get_list_of_owners_for_expired_keys.count 
@@ -376,25 +389,28 @@ function Send-email-to-users {
         $secret_expires_eta = $user.secret_days_until_secret_expires
         $trigger++
 
-        if($user.secret_status -eq "expired" -and $user.owner_mail -ne "No_owner" -and $user.request_type -ne "external_user") # If the secret is expired, we will send a notification on each run
+        # Convert string to array - making it easier to identity if the correct day has arrived. 
+        $temp_email_inform_owners_days_with_warnings = $email_inform_owners_days_with_warnings -split ','
+
+        if($user.secret_status -eq "expired" -and $user.owner_mail -ne "No_owner" -and $user.request_type -ne "external_user" -and $user.account_enabled -eq $true) # If the secret is expired, we will send a notification on each run
         {
             $temp_expired_owners += $user
         }
         elseif ($user.owner_mail -eq "No_owner") {
             Write-Output "No owner found for secret  ($trigger/$list_of_expired_secrets)"
         }
-        elseif ($email_inform_owners_days_with_warnings -notcontains $user.secret_days_until_secret_expires) 
+        elseif ($temp_email_inform_owners_days_with_warnings -notcontains $user.secret_days_until_secret_expires -and $user.account_enabled -eq $true) 
         {
             Write-Output "ETA for expiration not within notification values. $owner_name have not been warned today about $secret_displayname in expiring in $secret_expires_eta days ($trigger/$list_of_expired_secrets)"
         }
-        elseif($email_inform_owners_days_with_warnings -contains $user.secret_days_until_secret_expires -and $user.owner_mail -ne "No_owner" -and $user.request_type -ne "external_user") 
+        elseif($temp_email_inform_owners_days_with_warnings -contains $user.secret_days_until_secret_expires -and $user.owner_mail -ne "No_owner" -and $user.request_type -ne "external_user" -and $user.account_enabled -eq $true) 
         {
             Write-Output "Notify $owner_name about secret on $secret_displayname in $secret_expires_eta days ($trigger/$list_of_expired_secrets)"
             $body = $user | ConvertTo-Json
             Invoke-WebRequest -Uri $logic_app_url -Method POST -Body $body -ContentType 'application/json; charset=utf-16'
         }
         else {
-            write-error "Did not match any filters!: $secret_displayname ($trigger/$list_of_expired_secrets)"
+            Write-Output "Did not match any filters!: $secret_displayname ($trigger/$list_of_expired_secrets)"
         }        
     }
 
@@ -539,3 +555,6 @@ if ($email_inform_owners_directly -eq $true)
     $serviceprincipal_owner_expanded = Send-email-to-users # Email users if enabled
     Write-Output "tried to inform all owners, please check Logic app for result - time elapsed $timespend"
     } 
+
+Clear-AzContext -Confirm:$false
+Disconnect-MgGraph

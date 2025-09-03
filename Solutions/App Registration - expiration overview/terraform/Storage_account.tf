@@ -24,8 +24,10 @@ resource "azurerm_storage_account" "storage_account_temp_storage" {
 
 resource "azurerm_storage_container" "blob_storage_temp" {
   name                  = "temp-storage"
-  storage_account_name  = azurerm_storage_account.storage_account_temp_storage.name
+  storage_account_id    = azurerm_storage_account.storage_account_temp_storage.id
   container_access_type = "private"
 
   depends_on = [azurerm_storage_account.storage_account_temp_storage]
 }
+
+

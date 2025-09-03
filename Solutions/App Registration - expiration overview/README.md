@@ -2,8 +2,8 @@
 ## Versioninfo
 | Description  	| Value                   	|
 |--------------	|-------------------------	|
-| Version      	| 1.4.2                   	|
-| Release date 	| 16. May 2025            	|
+| Version      	| 1.5.0                   	|
+| Release date 	| 02. Sep 2025            	|
 | Author       	| Martin Meiner Tastensen 	|
 
 ## intro
