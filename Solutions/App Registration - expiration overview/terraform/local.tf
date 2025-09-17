@@ -1,7 +1,6 @@
 locals {
   base_tags = {
     "Source"     = "https://github.com/martin-tastensen/sharing-azure-resources"
-    "Created by" = data.azuread_user.current_user.user_principal_name
   }
 
   tags = merge(local.base_tags, var.custom_tags)

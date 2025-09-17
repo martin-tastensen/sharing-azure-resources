@@ -16,11 +16,16 @@ resource "azurerm_key_vault" "key_vault_resource_name" {
 }
 
 ## Create SP and assign the API permissions as required to the account.
+data "azuread_users" "Service_Principal_owners" {
+  user_principal_names = [
+    for upn in distinct(var.Service_Principal_owners.owner_upn.value_string) : lower(trimspace(upn))
+  ]
+}
 
 resource "azuread_application" "service_principal_name_entra_id" {
   display_name = var.Service_Principal_name
   notes        = "Used in relation to audit mail, being send out to owners of SP where the secret/cert is about to expire ot expired"
-  owners       = [data.azurerm_client_config.current.object_id]
+  owners       = [for u in data.azuread_users.Service_Principal_owners.users : u.object_id]
 
   required_resource_access {
     resource_app_id = "00000003-0000-0000-c000-000000000000" # Microsoft Graph
@@ -39,15 +44,22 @@ resource "azuread_application" "service_principal_name_entra_id" {
       id   = "df021288-bdef-4463-88db-98f22de89214" # User.Read.All, https://learn.microsoft.com/en-us/graph/permissions-reference#userreadall
       type = "Role"
     }
-
   }
 }
 
-# Permissions for the user running the terraform apply. This will be the signed in user. THe user will be granted access to save and read keys in the keyvault
+# Lookup the users, based on the var.keyvault_owners values
+# The user(s) will be assigned the "Key Vault Secrets Officer" role
+data "azuread_user" "keyvault_owners" {
+  for_each            = toset(var.keyvault_owners.owner_upn.value_string)
+  user_principal_name = each.value
+}
+
 resource "azurerm_role_assignment" "assign_key_vault_Secrets_officer_to_executing_user" {
+  for_each = data.azuread_user.keyvault_owners
+
   scope                = azurerm_resource_group.baseline_resource_group.id
   role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = data.azurerm_client_config.current.object_id
+  principal_id         = each.value.object_id
 
   depends_on = [azurerm_resource_group.baseline_resource_group]
 }
@@ -88,10 +100,17 @@ data "azuread_user" "current_user" {
   object_id = data.azurerm_client_config.current.object_id
 }
 
+data "azuread_user" "storage_account_owners" {
+  for_each            = toset(var.storage_account_owners.owner_upn.value_string)
+  user_principal_name = each.value
+}
+
 resource "azurerm_role_assignment" "assign_storage_account_Storage_Blob_data_owner_to_executing_user" {
+  for_each = data.azuread_user.storage_account_owners
+
   scope                = azurerm_storage_account.storage_account_temp_storage.id
   role_definition_name = "Storage Blob Data Owner"
-  principal_id         = data.azurerm_client_config.current.object_id
+  principal_id         = each.value.object_id
 
   depends_on = [
     azurerm_resource_group.baseline_resource_group,

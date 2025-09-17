@@ -225,3 +225,32 @@ resource "azurerm_automation_variable_bool" "Communication_service_naming_domain
   depends_on = [azurerm_automation_account.expiration-automation]
 }
 
+resource "azurerm_automation_variable_string" "keyvault_owners" {
+  name                    = "keyvault_owners"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = join(",", var.keyvault_owners["owner_upn"].value_string)
+  description             = var.keyvault_owners["owner_upn"].description
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+
+resource "azurerm_automation_variable_string" "Service_Principal_owners" {
+  name                    = "Service_Principal_owners"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = join(",", var.Service_Principal_owners["owner_upn"].value_string)
+  description             = var.Service_Principal_owners["owner_upn"].description
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+
+resource "azurerm_automation_variable_string" "storage_account_owners" {
+  name                    = "storage_account_owners"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = join(",", var.storage_account_owners["owner_upn"].value_string)
+  description             = var.storage_account_owners["owner_upn"].description
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
