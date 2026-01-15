@@ -139,7 +139,7 @@ resource "azurerm_automation_variable_string" "automationion_account_temp_storag
   name                    = "storage_account_temp_storage_account_name"
   resource_group_name     = azurerm_resource_group.baseline_resource_group.name
   automation_account_name = azurerm_automation_account.expiration-automation.name
-  value                   = azurerm_storage_container.blob_storage_temp.storage_account_name
+  value                   = azurerm_storage_account.storage_account_temp_storage.name
   description             = "Created using terraform, used for temp storage of files for the e-mail send workflow"
 
   depends_on = [azurerm_automation_account.expiration-automation]
@@ -165,13 +165,22 @@ resource "azurerm_automation_variable_string" "email_inform_owners_days_with_war
   depends_on = [azurerm_automation_account.expiration-automation]
 }
 
-
 resource "azurerm_automation_variable_string" "email_Contact_email_for_notification_emails" {
   name                    = "email_Contact_email_for_notification_emails"
   resource_group_name     = azurerm_resource_group.baseline_resource_group.name
   automation_account_name = azurerm_automation_account.expiration-automation.name
-  value                   = var.email_Contact_email_for_notification_emails
-  description             = "This is the e-mail address that should be used to send a message about all the expiring secrets/certs where an owner could not be found: Note: they will be send as an attachement in CSV format"
+  value                   = join(",", var.contact_configuration_for_notification_emails["email_Contact_email_for_notification_emails"].value_string)
+  description             = var.contact_configuration_for_notification_emails["email_Contact_email_for_notification_emails"].description
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+
+resource "azurerm_automation_variable_string" "email_Contact_email_for_notification_emails_add_date" {
+  name                    = "email_Contact_email_for_notification_emails_add_date"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = var.contact_configuration_for_notification_emails["email_Contact_email_for_notification_emails_add_date"].value_bool
+  description             = var.contact_configuration_for_notification_emails["email_Contact_email_for_notification_emails_add_date"].description
 
   depends_on = [azurerm_automation_account.expiration-automation]
 }
@@ -180,8 +189,8 @@ resource "azurerm_automation_variable_string" "email_define_domains_for_owner_no
   name                    = "email_define_domains_for_owner_notification_email"
   resource_group_name     = azurerm_resource_group.baseline_resource_group.name
   automation_account_name = azurerm_automation_account.expiration-automation.name
-  value                   = var.email_define_domains_for_owner_notification_email
-  description             = "This is the e-mail address that should be used to send a message about all the expiring secrets/certs where an owner could not be found: Note: they will be send as an attachement in CSV format"
+  value                   = join(",", var.destination_approved_domains["email_define_domains_for_owner_notification_email"].value_string)
+  description             = var.destination_approved_domains["email_define_domains_for_owner_notification_email"].description
 
   depends_on = [azurerm_automation_account.expiration-automation]
 }
@@ -190,9 +199,58 @@ resource "azurerm_automation_variable_bool" "email_define_domains_for_owner_noti
   name                    = "email_define_domains_for_owner_notification_email_enable"
   resource_group_name     = azurerm_resource_group.baseline_resource_group.name
   automation_account_name = azurerm_automation_account.expiration-automation.name
-  value                   = var.email_define_domains_for_owner_notification_email_enable
-  description             = "If true, the script will look at the domains in the var.email_define_domains_for_owner_notification_email and only send e-mail to users who have an e-mail in this domain at either the primary e-mail field or the othermails field in entra ID"
+  value                   = var.destination_approved_domains["email_define_domains_for_owner_notification_email_enable"].value_bool
+  description             = var.destination_approved_domains["email_define_domains_for_owner_notification_email_enable"].description
 
   depends_on = [azurerm_automation_account.expiration-automation]
 }
 
+resource "azurerm_automation_variable_string" "Communication_service_naming_domain_type" {
+  name                    = "Communication_service_naming_domain_type"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = var.domain_type["Communication_service_naming_domain_type"].value_string
+  description             = var.domain_type["Communication_service_naming_domain_type"].description
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+
+resource "azurerm_automation_variable_bool" "Communication_service_naming_domain_created_dns_records" {
+  name                    = "Communication_service_naming_domain_created_dns_records"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = var.domain_type["Communication_service_naming_domain_created_dns_records"].value_bool
+  description             = var.domain_type["Communication_service_naming_domain_created_dns_records"].description
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+
+resource "azurerm_automation_variable_string" "keyvault_owners" {
+  name                    = "keyvault_owners"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = join(",", var.keyvault_owners["owner_upn"].value_string)
+  description             = var.keyvault_owners["owner_upn"].description
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+
+resource "azurerm_automation_variable_string" "Service_Principal_owners" {
+  name                    = "Service_Principal_owners"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = join(",", var.Service_Principal_owners["owner_upn"].value_string)
+  description             = var.Service_Principal_owners["owner_upn"].description
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
+
+resource "azurerm_automation_variable_string" "storage_account_owners" {
+  name                    = "storage_account_owners"
+  resource_group_name     = azurerm_resource_group.baseline_resource_group.name
+  automation_account_name = azurerm_automation_account.expiration-automation.name
+  value                   = join(",", var.storage_account_owners["owner_upn"].value_string)
+  description             = var.storage_account_owners["owner_upn"].description
+
+  depends_on = [azurerm_automation_account.expiration-automation]
+}
